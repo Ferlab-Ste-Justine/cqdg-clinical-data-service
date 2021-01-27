@@ -1,0 +1,10 @@
+submitter_donor_id	submitter_biospecimen_id	submitter_diagnosis_id	date_biospecimen_collection	tumor_normal_designation	biospecimen_tissue_source	biospecimen_type	biospecimen_anatomic_location	tumor_histological_type	biospecimen_processing	biospecimen_storage	biospecimen_access
+PT00001	BS00001	DI00001	11/22/2009	Normal	Blood derived - peripheral blood	Normal	C42.0: Blood		Cryopreservation - other	Frozen in -70 freezer	Yes
+PT00002	BS00002	DI00002	1/9/2009	Normal	Blood derived - peripheral blood	Normal	C42.0: Blood	M-9732/3: Multiple myeloma	Cryopreservation - other	Frozen in -70 freezer	Yes
+PT00003	BS00003	DI00003	8/24/2008	Normal	Blood derived - peripheral blood	Normal	C42.0: Blood		Cryopreservation - other	Frozen in -70 freezer	Yes
+PT00004	BS00004	DI00004	6/14/2009	Normal	Blood derived - peripheral blood	Normal	C42.0: Blood	M-9440/3: Glioblastoma, NOS	Cryopreservation - other	Frozen in -70 freezer	Yes
+PT00005	BS00005	DI00005	6/25/2009	Normal	Blood derived - peripheral blood	Normal	C42.0: Blood		Cryopreservation - other	Frozen in -70 freezer	Yes
+PT00006	BS00006	DI00006	9/11/2008	Normal	Blood derived - peripheral blood	Normal	C42.0: Blood		Cryopreservation - other	Frozen in -70 freezer	Yes
+PT00007	BS00007	DI00007	7/5/2009	Normal	Blood derived - peripheral blood	Normal	C42.0: Blood		Cryopreservation - other	Frozen in -70 freezer	Yes
+PT00008	BS00008	DI00008	8/7/2009	Normal	Blood derived - peripheral blood	Normal	C42.0: Blood	M-9820/3: Lymphoid leukemia, NOS	Other	Other	Yes
+PT00009	BS00009	DI00009	10/8/2009	Normal	Blood derived - peripheral blood	Normal	C42.0: Blood	M-8211/3: Tubular carcinoma	Cryopreservation - other	Frozen in -70 freezer	Yes
