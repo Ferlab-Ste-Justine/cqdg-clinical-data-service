@@ -45,9 +45,10 @@ export const env = {
     },
     auth: {
         enabled: authEnabled,
-        realm: authEnabled ? getOsEnvOptional('AUTH_REALM') : undefined,
-        serverUrl: authEnabled ? getOsEnvOptional('AUTH_SERVER_URL') : undefined,
-        clientId: authEnabled ? getOsEnvOptional('AUTH_CLIENT_ID') : undefined,
+        realm: authEnabled ? getOsEnv('AUTH_REALM') : getOsEnvOptional('AUTH_REALM'),
+        serverUrl: authEnabled ? getOsEnv('AUTH_SERVER_URL') : getOsEnvOptional('AUTH_SERVER_URL'),
+        clientId: authEnabled ? getOsEnv('AUTH_CLIENT_ID') : getOsEnvOptional('AUTH_CLIENT_ID'),
+        testClientSecret: getOsEnvOptional('AUTH_TEST_CLIENT_SECRET'),
     },
     lectern: {
         serverUrl: getOsEnv('LECTERN_SERVER_URL'),

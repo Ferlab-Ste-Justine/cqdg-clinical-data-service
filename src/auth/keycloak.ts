@@ -12,7 +12,7 @@ const log = new Logger(__filename);
 const cacheTTL = env.app.cacheCertTTLInSeconds;
 const certificatesCache = new CacheContainer(new MemoryStorage());
 
-const makeUser = ( input: KeycloakUser) => new User( input );
+const makeUser = ( json: KeycloakUser ) => new User( json );
 
 const verify = curryN( 2 )( jwt.verify );
 
