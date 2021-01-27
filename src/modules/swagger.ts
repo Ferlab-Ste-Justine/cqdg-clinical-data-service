@@ -45,6 +45,7 @@ export const configureSwagger = async (app: express.Application): Promise<void> 
                         },
                     },
                 },
+                security: [{ cqdgAuth: [] }],
             }
         );
 

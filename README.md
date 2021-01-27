@@ -15,7 +15,6 @@
 - [GraphQL](#-graph-q-l)
 - [Docker](#-docker)
 - [Further Documentations](#-further-documentations)
-- [Related Projects](#-related-projects)
 - [License](#-license)
 
 ![divider](divider.png)

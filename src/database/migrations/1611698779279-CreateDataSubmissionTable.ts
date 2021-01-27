@@ -19,6 +19,11 @@ export class CreateDataSubmissionTable1611698779279 implements MigrationInterfac
                     isPrimary: false,
                     isNullable: false,
                 }, {
+                    name: 'status_report',
+                    type: 'json',
+                    isPrimary: false,
+                    isNullable: true,
+                }, {
                     name: 'creation_date',
                     type: 'bigint',
                     isPrimary: false,

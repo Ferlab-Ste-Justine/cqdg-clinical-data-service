@@ -5,7 +5,7 @@ import Keycloak from "../../../src/auth/keycloak";
 
 describe('Keycloak', () => {
 
-    test('Validate user creation from token', async (done) => {
+    test.skip('Validate user creation from token', async (done) => {
         const {serverUrl, realm} = env.auth;
         const tokenUrl = `${serverUrl}/auth/realms/${realm}/protocol/openid-connect/token`;
 
