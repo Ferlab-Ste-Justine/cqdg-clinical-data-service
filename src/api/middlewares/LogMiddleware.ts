@@ -7,7 +7,6 @@ import { Logger } from '../../lib/logger';
 
 @Middleware({ type: 'before' })
 export class LogMiddleware implements ExpressMiddlewareInterface {
-
     private log = new Logger(__dirname);
 
     public use(req: express.Request, res: express.Response, next: express.NextFunction): any {
@@ -17,5 +16,4 @@ export class LogMiddleware implements ExpressMiddlewareInterface {
             },
         })(req, res, next);
     }
-
 }

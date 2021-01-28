@@ -72,7 +72,7 @@ All script are defined in the `package-scripts.js` file, but the most important 
 
 ### Linting
 
-- Run code quality analysis using `npm run lint`. This runs tslint.
+- Run code quality analysis using `npm start lint`. This runs tslint.
 - There is also a vscode task for this called `lint`.
 
 ### Tests

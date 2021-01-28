@@ -1,17 +1,16 @@
-import {Container} from 'typedi';
-import {Connection} from 'typeorm';
-import {closeDatabase, createDatabaseConnection, migrateDatabase} from '../utils/database';
-import {configureLogger} from '../../src/modules/logger';
-import {DataSubmission} from '../../src/api/models/DataSubmission';
-import {DataSubmissionService} from '../../src/api/services/DataSubmissionService';
-import {Status} from '../../src/api/models/ReferentialData';
+import { Container } from 'typedi';
+import { Connection } from 'typeorm';
+import { closeDatabase, createDatabaseConnection, migrateDatabase } from '../utils/database';
+import { configureLogger } from '../../src/modules/logger';
+import { DataSubmission } from '../../src/api/models/DataSubmission';
+import { DataSubmissionService } from '../../src/api/services/DataSubmissionService';
+import { Status } from '../../src/api/models/ReferentialData';
 import * as uuid from 'uuid';
-import {UploadReport} from '../../src/api/controllers/responses/UploadReport';
-import {SingleFileUploadStatus} from '../../src/api/controllers/responses/SingleFileUploadStatus';
-import {RecordValidationError} from '../../src/api/controllers/responses/RecordValidationError';
+import { UploadReport } from '../../src/api/controllers/responses/UploadReport';
+import { SingleFileUploadStatus } from '../../src/api/controllers/responses/SingleFileUploadStatus';
+import { RecordValidationError } from '../../src/api/controllers/responses/RecordValidationError';
 
 describe('DataSubmissionService', () => {
-
     // -------------------------------------------------------------------------
     // Setup up
     // -------------------------------------------------------------------------
@@ -47,20 +46,22 @@ describe('DataSubmissionService', () => {
         const biospecimenValidationError: RecordValidationError = new RecordValidationError({
             errorType: 'INVALID_BY_REGEX',
             fieldName: 'biospecimen_anatomic_location',
-            message: 'The value is not a permissible for this field, it must meet the regular expression: \'^[C][0-9]{2}(.[0-9]{1})?$\'. Examples: C50.1,C18',
+            message:
+                "The value is not a permissible for this field, it must meet the regular expression: '^[C][0-9]{2}(.[0-9]{1})?$'. Examples: C50.1,C18",
             info: {
-                'regex': '^[C][0-9]{2}(.[0-9]{1})?$',
-                'examples': 'C50.1,C18',
+                regex: '^[C][0-9]{2}(.[0-9]{1})?$',
+                examples: 'C50.1,C18',
             },
         });
 
         const donorValidationError: RecordValidationError = new RecordValidationError({
             errorType: 'INVALID_BY_REGEX',
             fieldName: 'submitter_donor_id',
-            message: 'The value is not a permissible for this field, it must meet the regular expression: \'^[C][0-9]{2}(.[0-9]{1})?$\'. Examples: C50.1,C18',
+            message:
+                "The value is not a permissible for this field, it must meet the regular expression: '^[C][0-9]{2}(.[0-9]{1})?$'. Examples: C50.1,C18",
             info: {
-                'regex': '^[C][0-9]{2}(.[0-9]{1})?$',
-                'examples': 'C50.1,C18',
+                regex: '^[C][0-9]{2}(.[0-9]{1})?$',
+                examples: 'C50.1,C18',
             },
         });
 
@@ -111,5 +112,4 @@ describe('DataSubmissionService', () => {
         }
         done();
     });
-
 });

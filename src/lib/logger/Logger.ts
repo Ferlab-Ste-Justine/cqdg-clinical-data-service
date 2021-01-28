@@ -13,7 +13,6 @@ import * as winston from 'winston';
  */
 
 export class Logger {
-
     public static DEFAULT_SCOPE = 'app';
 
     private static parsePathToScope(filepath: string): string {
@@ -31,7 +30,7 @@ export class Logger {
     private scope: string;
 
     constructor(scope?: string) {
-        this.scope = Logger.parsePathToScope((scope) ? scope : Logger.DEFAULT_SCOPE);
+        this.scope = Logger.parsePathToScope(scope ? scope : Logger.DEFAULT_SCOPE);
     }
 
     public debug(message: string, ...args: any[]): void {
@@ -59,5 +58,4 @@ export class Logger {
     private formatScope(): string {
         return `[${this.scope}]`;
     }
-
 }

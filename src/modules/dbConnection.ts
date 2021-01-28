@@ -1,6 +1,6 @@
-import {ConnectionOptions} from 'typeorm/connection/ConnectionOptions';
-import {env} from '../env';
-import {Connection, createConnection, getConnectionOptions} from 'typeorm';
+import { ConnectionOptions } from 'typeorm/connection/ConnectionOptions';
+import { env } from '../env';
+import { Connection, createConnection, getConnectionOptions } from 'typeorm';
 
 /**
  * TypeORM

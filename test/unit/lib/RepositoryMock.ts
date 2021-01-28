@@ -1,5 +1,4 @@
 export class RepositoryMock<T> {
-
     public one: T;
     public list: T[];
 
@@ -27,5 +26,4 @@ export class RepositoryMock<T> {
         this.deleteMock(value, args);
         return Promise.resolve(value);
     }
-
 }

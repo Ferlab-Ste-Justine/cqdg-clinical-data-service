@@ -1,16 +1,15 @@
-import {Container} from 'typedi';
-import {Connection} from 'typeorm';
-import {closeDatabase, createDatabaseConnection, migrateDatabase} from '../utils/database';
-import {configureLogger} from '../../src/modules/logger';
-import {DataSubmission} from '../../src/api/models/DataSubmission';
-import {DataSubmissionService} from '../../src/api/services/DataSubmissionService';
-import {Status} from '../../src/api/models/ReferentialData';
+import { Container } from 'typedi';
+import { Connection } from 'typeorm';
+import { closeDatabase, createDatabaseConnection, migrateDatabase } from '../utils/database';
+import { configureLogger } from '../../src/modules/logger';
+import { DataSubmission } from '../../src/api/models/DataSubmission';
+import { DataSubmissionService } from '../../src/api/services/DataSubmissionService';
+import { Status } from '../../src/api/models/ReferentialData';
 import * as uuid from 'uuid';
-import {SampleRegistration} from '../../src/api/models/SampleRegistration';
-import {SampleRegistrationService} from '../../src/api/services/SampleRegistrationService';
+import { SampleRegistration } from '../../src/api/models/SampleRegistration';
+import { SampleRegistrationService } from '../../src/api/services/SampleRegistrationService';
 
 describe('SampleRegistrationService', () => {
-
     // -------------------------------------------------------------------------
     // Setup up
     // -------------------------------------------------------------------------
@@ -65,5 +64,4 @@ describe('SampleRegistrationService', () => {
 
         done();
     });
-
 });

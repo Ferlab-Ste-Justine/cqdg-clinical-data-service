@@ -1,11 +1,11 @@
-import {Entity, PrimaryGeneratedColumn, Column, OneToMany} from 'typeorm';
-import {Status} from './ReferentialData';
-import {IsNotEmpty, IsString, ValidateNested} from 'class-validator';
-import {AuditEntity} from './AuditEntity';
-import {SampleRegistration} from './SampleRegistration';
-import {UploadReport} from '../controllers/responses/UploadReport';
-import {DbAwareColumn} from '../../decorators/DBAwareColumn';
-import {Type} from 'class-transformer';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Status } from './ReferentialData';
+import { IsNotEmpty, IsString, ValidateNested } from 'class-validator';
+import { AuditEntity } from './AuditEntity';
+import { SampleRegistration } from './SampleRegistration';
+import { UploadReport } from '../controllers/responses/UploadReport';
+import { DbAwareColumn } from '../../decorators/DBAwareColumn';
+import { Type } from 'class-transformer';
 
 @Entity({
     name: 'data_submission',
@@ -30,6 +30,6 @@ export class DataSubmission extends AuditEntity {
     })
     public statusReport: UploadReport;
 
-    @OneToMany(type => SampleRegistration, sampleRegistration => sampleRegistration.dataSubmission)
+    @OneToMany((type) => SampleRegistration, (sampleRegistration) => sampleRegistration.dataSubmission)
     public registeredSamples: SampleRegistration[];
 }

@@ -1,12 +1,11 @@
-import {Field, ID, ObjectType} from 'type-graphql';
-import {DataSubmission} from './DataSubmission';
+import { Field, ID, ObjectType } from 'type-graphql';
+import { DataSubmission } from './DataSubmission';
 
 @ObjectType({
     description: 'Sample registration object.',
 })
 export class SampleRegistration {
-
-    @Field(type => ID)
+    @Field((type) => ID)
     public id: string;
 
     @Field({
@@ -39,9 +38,8 @@ export class SampleRegistration {
     })
     public dataSubmissionId: string;
 
-    @Field(type => DataSubmission, {
+    @Field((type) => DataSubmission, {
         nullable: true,
     })
     public dataSubmission: DataSubmission;
-
 }

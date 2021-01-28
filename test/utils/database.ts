@@ -3,7 +3,10 @@ import { Connection, createConnection, useContainer } from 'typeorm';
 
 import { env } from '../../src/env';
 
-declare type LoggerOptions = boolean | 'all' | Array<('query' | 'schema' | 'error' | 'warn' | 'info' | 'log' | 'migration')>;
+declare type LoggerOptions =
+    | boolean
+    | 'all'
+    | Array<'query' | 'schema' | 'error' | 'warn' | 'info' | 'log' | 'migration'>;
 
 export const createDatabaseConnection = async (): Promise<Connection> => {
     useContainer(Container);

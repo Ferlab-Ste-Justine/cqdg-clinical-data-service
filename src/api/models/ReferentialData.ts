@@ -18,7 +18,6 @@ export interface IKeycloakUser {
 export type KeycloakUser = IKeycloakUser;
 
 export class User {
-
     public id: string;
     public userName: string;
     public emailVerified: string;

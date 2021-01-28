@@ -2,14 +2,12 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 
 import * as pkg from '../package.json';
-import {
-    getOsEnv, getOsEnvOptional, getOsPath, getOsPaths, normalizePort, toBool, toNumber
-} from './lib/env';
+import { getOsEnv, getOsEnvOptional, getOsPath, getOsPaths, normalizePort, toBool, toNumber } from './lib/env';
 
 /**
  * Load .env file or for tests the .env.test file.
  */
-dotenv.config({ path: path.join(process.cwd(), `.env${((process.env.NODE_ENV === 'test') ? '.test' : '')}`) });
+dotenv.config({ path: path.join(process.cwd(), `.env${process.env.NODE_ENV === 'test' ? '.test' : ''}`) });
 
 const authEnabled = toBool(getOsEnvOptional('AUTH_ENABLED', 'true'));
 
@@ -60,7 +58,9 @@ export const env = {
     fileUpload: {
         maxNumberOfFiles: toNumber(getOsEnvOptional('FILE_UPLOAD_MAX_NB_OF_FILES', '11')),
         maxSize: toNumber(getOsEnvOptional('FILE_UPLOAD_MAX_SIZE_MB', '50')),
-        allowedMimeTypes: getOsEnvOptional('FILE_UPLOAD_ALLOWED_MIMETYPES', 'text/tab-separated-values,text/csv').split(','),
+        allowedMimeTypes: getOsEnvOptional('FILE_UPLOAD_ALLOWED_MIMETYPES', 'text/tab-separated-values,text/csv').split(
+            ','
+        ),
     },
     log: {
         level: getOsEnv('LOG_LEVEL'),

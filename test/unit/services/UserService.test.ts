@@ -3,12 +3,11 @@ import { events } from '../../../src/api/subscribers/events';
 import { EventDispatcherMock } from '../lib/EventDispatcherMock';
 import { LogMock } from '../lib/LogMock';
 import { RepositoryMock } from '../lib/RepositoryMock';
-import {DataSubmission} from "../../../src/api/models/DataSubmission";
-import * as uuid from "uuid";
-import {Status} from "../../../src/api/models/ReferentialData";
+import { DataSubmission } from '../../../src/api/models/DataSubmission';
+import * as uuid from 'uuid';
+import { Status } from '../../../src/api/models/ReferentialData';
 
 describe('UserService', () => {
-
     test('Find should return a list of users', async (done) => {
         const log = new LogMock();
         const repo = new RepositoryMock();
@@ -38,5 +37,4 @@ describe('UserService', () => {
         expect(ed.dispatchMock).toBeCalledWith([events.dataSubmission.created, newDataSubmission]);
         done();
     });
-
 });

@@ -1,6 +1,6 @@
-import {IsNotEmpty} from 'class-validator';
-import {Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn} from 'typeorm';
-import {DataSubmission} from './DataSubmission';
+import { IsNotEmpty } from 'class-validator';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { DataSubmission } from './DataSubmission';
 
 @Entity({
     name: 'sample_registration',
@@ -15,7 +15,7 @@ export class SampleRegistration {
     })
     public dataSubmissionId: string;
 
-    @ManyToOne(type => DataSubmission, dataSubmission => dataSubmission.registeredSamples)
+    @ManyToOne((type) => DataSubmission, (dataSubmission) => dataSubmission.registeredSamples)
     @JoinColumn({ name: 'data_submission_id' })
     public dataSubmission: DataSubmission;
 

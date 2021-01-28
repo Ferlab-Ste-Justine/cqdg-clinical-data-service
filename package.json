@@ -141,7 +141,9 @@
     "mock-express-response": "^0.3.0",
     "ncp": "^2.0.0",
     "nock": "^13.0.5",
+    "prettier": "^2.2.1",
     "sqlite3": "^5.0.1",
-    "ts-jest": "^26.4.4"
+    "ts-jest": "^26.4.4",
+    "tslint-config-prettier": "^1.18.0"
   }
 }

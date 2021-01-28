@@ -1,8 +1,10 @@
-import {SchemaValidationError, SchemaValidationErrorTypes} from '@overturebio-stack/lectern-client/lib/schema-entities';
-import {IsEnum, IsJSON, IsNotEmpty, IsNumber, IsString} from 'class-validator';
+import {
+    SchemaValidationError,
+    SchemaValidationErrorTypes,
+} from '@overturebio-stack/lectern-client/lib/schema-entities';
+import { IsEnum, IsJSON, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class RecordValidationError implements SchemaValidationError {
-
     @IsEnum(SchemaValidationErrorTypes)
     public errorType: SchemaValidationErrorTypes;
 

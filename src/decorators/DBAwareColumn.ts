@@ -1,5 +1,5 @@
 import { Column, ColumnOptions, ColumnType } from 'typeorm';
-import {env} from '../env';
+import { env } from '../env';
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
 const circularDependenciesReplacer = () => {
@@ -16,7 +16,7 @@ const circularDependenciesReplacer = () => {
 };
 
 const typeMapping: { [key: string]: ColumnOptions } = {
-    'json': {
+    json: {
         type: 'text',
         transformer: {
             to: (value?: any) => (!value ? value : JSON.stringify(value, circularDependenciesReplacer())),

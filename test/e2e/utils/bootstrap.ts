@@ -1,15 +1,15 @@
 import * as express from 'express';
-import {Application} from 'express';
+import { Application } from 'express';
 import * as http from 'http';
-import {Connection} from 'typeorm/connection/Connection';
-import {createDatabaseConnection} from '../../utils/database';
-import {createExpressServer} from "routing-controllers";
-import {env} from "../../../src/env";
-import {authorizationChecker} from "../../../src/auth/authorizationChecker";
-import {currentUserChecker} from "../../../src/auth/currentUserChecker";
-import {configureIOC} from "../../../src/modules/ioc";
-import {configureLogger} from "../../../src/modules/logger";
-import {configureEventDispatcher} from "../../../src/modules/dispatcher";
+import { Connection } from 'typeorm/connection/Connection';
+import { createDatabaseConnection } from '../../utils/database';
+import { createExpressServer } from 'routing-controllers';
+import { env } from '../../../src/env';
+import { authorizationChecker } from '../../../src/auth/authorizationChecker';
+import { currentUserChecker } from '../../../src/auth/currentUserChecker';
+import { configureIOC } from '../../../src/modules/ioc';
+import { configureLogger } from '../../../src/modules/logger';
+import { configureEventDispatcher } from '../../../src/modules/dispatcher';
 
 export interface BootstrapSettings {
     app: Application;
@@ -36,16 +36,13 @@ export const bootstrapApp = async (): Promise<BootstrapSettings> => {
         currentUserChecker: currentUserChecker(connection),
     });
 
-    expressApp.get(
-        env.app.routePrefix,
-        (req: express.Request, res: express.Response) => {
-            return res.json({
-                name: env.app.name,
-                version: env.app.version,
-                description: env.app.description,
-            });
-        }
-    );
+    expressApp.get(env.app.routePrefix, (req: express.Request, res: express.Response) => {
+        return res.json({
+            name: env.app.name,
+            version: env.app.version,
+            description: env.app.description,
+        });
+    });
 
     const expressServer: http.Server = http.createServer(expressApp);
 

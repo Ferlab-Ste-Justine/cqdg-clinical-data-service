@@ -1,10 +1,10 @@
 import * as express from 'express';
-import {env} from '../env';
-import {buildSchema} from 'type-graphql';
+import { env } from '../env';
+import { buildSchema } from 'type-graphql';
 import Container from 'typedi';
 import path from 'path';
-import {getErrorCode, getErrorMessage, handlingErrors} from '../lib/graphql';
-import {graphqlHTTP} from 'express-graphql';
+import { getErrorCode, getErrorMessage, handlingErrors } from '../lib/graphql';
+import { graphqlHTTP } from 'express-graphql';
 
 /**
  * GraphQL API
@@ -23,7 +23,6 @@ export const configureGraphQL = async (app: express.Application): Promise<void> 
 
         // Add graphql layer to the express app
         app.use(env.graphql.route, (request: express.Request, response: express.Response) => {
-
             // Build GraphQLContext
             const requestId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER); // uuid-like
             const container = Container.of(requestId); // get scoped container
@@ -38,16 +37,17 @@ export const configureGraphQL = async (app: express.Application): Promise<void> 
             graphqlHTTP({
                 schema,
                 context,
-                graphiql: env.graphql.editor ? {
-                    headerEditorEnabled: true,
-                } : false,
-                customFormatErrorFn: error => ({
+                graphiql: env.graphql.editor
+                    ? {
+                          headerEditorEnabled: true,
+                      }
+                    : false,
+                customFormatErrorFn: (error) => ({
                     code: getErrorCode(error.message),
                     message: getErrorMessage(error.message),
                     path: error.path,
                 }),
             })(request, response);
         });
-
     }
 };

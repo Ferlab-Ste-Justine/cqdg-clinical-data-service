@@ -1,6 +1,6 @@
-import {IsNotEmpty, ValidateNested} from 'class-validator';
-import {RecordValidationError} from './RecordValidationError';
-import {Type} from 'class-transformer';
+import { IsNotEmpty, ValidateNested } from 'class-validator';
+import { RecordValidationError } from './RecordValidationError';
+import { Type } from 'class-transformer';
 
 export class SingleFileUploadStatus {
     @IsNotEmpty()

@@ -1,10 +1,10 @@
 import * as express from 'express';
-import {env} from '../env';
-import {getFromContainer, MetadataStorage} from 'class-validator';
-import {validationMetadatasToSchemas} from 'class-validator-jsonschema';
-import {defaultMetadataStorage as classTransformerMetadataStorage} from 'class-transformer/storage';
-import {routingControllersToSpec} from 'routing-controllers-openapi';
-import {getMetadataArgsStorage} from 'routing-controllers';
+import { env } from '../env';
+import { getFromContainer, MetadataStorage } from 'class-validator';
+import { validationMetadatasToSchemas } from 'class-validator-jsonschema';
+import { defaultMetadataStorage as classTransformerMetadataStorage } from 'class-transformer/storage';
+import { routingControllersToSpec } from 'routing-controllers-openapi';
+import { getMetadataArgsStorage } from 'routing-controllers';
 import * as swaggerUi from 'swagger-ui-express';
 
 /**
@@ -16,15 +16,12 @@ export const configureSwagger = async (app: express.Application): Promise<void> 
     if (env.swagger.enabled) {
         const { validationMetadatas } = getFromContainer(MetadataStorage) as any;
 
-        const schemas = validationMetadatasToSchemas(
-            validationMetadatas,
-            {
-                classTransformerMetadataStorage,
-                refPointerPrefix: '#/components/schemas/',
-            }
-        );
+        const schemas = validationMetadatasToSchemas(validationMetadatas, {
+            classTransformerMetadataStorage,
+            refPointerPrefix: '#/components/schemas/',
+        });
 
-        const {serverUrl, realm} = env.auth;
+        const { serverUrl, realm } = env.auth;
         const tokenUrl = `${serverUrl}/auth/realms/${realm}/protocol/openid-connect/token`;
 
         const swaggerFile = routingControllersToSpec(
@@ -65,11 +62,6 @@ export const configureSwagger = async (app: express.Application): Promise<void> 
         // We can validate config using : https://editor.swagger.io/
         // console.log(JSON.stringify(swaggerFile));
 
-        app.use(
-            env.swagger.route,
-            swaggerUi.serve,
-            swaggerUi.setup(swaggerFile)
-        );
-
+        app.use(env.swagger.route, swaggerUi.serve, swaggerUi.setup(swaggerFile));
     }
 };

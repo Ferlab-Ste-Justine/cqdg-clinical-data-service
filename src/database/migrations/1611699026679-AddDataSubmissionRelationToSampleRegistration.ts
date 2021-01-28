@@ -1,7 +1,6 @@
-import {MigrationInterface, QueryRunner, TableForeignKey} from 'typeorm';
+import { MigrationInterface, QueryRunner, TableForeignKey } from 'typeorm';
 
 export class AddDataSubmissionRelationToSampleRegistration1611699026679 implements MigrationInterface {
-
     private tableForeignKey = new TableForeignKey({
         name: 'fk_data_submission_sample_registration',
         columnNames: ['data_submission_id'],
@@ -17,5 +16,4 @@ export class AddDataSubmissionRelationToSampleRegistration1611699026679 implemen
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.dropForeignKey('sample_registration', this.tableForeignKey);
     }
-
 }

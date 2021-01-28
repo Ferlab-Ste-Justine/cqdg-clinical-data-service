@@ -1,7 +1,6 @@
 import { Logger } from '../../../src/lib/logger';
 
 export class LogMock extends Logger {
-
     public debugMock = jest.fn();
     public infoMock = jest.fn();
     public warnMock = jest.fn();
@@ -22,5 +21,4 @@ export class LogMock extends Logger {
     public error(message: string, ...args: any[]): void {
         this.errorMock(message, args);
     }
-
 }

@@ -1,6 +1,6 @@
 import { Action } from 'routing-controllers';
 import { Connection } from 'typeorm';
-import {User} from '../api/models/ReferentialData';
+import { User } from '../api/models/ReferentialData';
 
 // Used by @CurrentUser annotation to inject user like :
 //      public find(@CurrentUser() user?: User): Promise<Pet[]>

@@ -1,11 +1,10 @@
-import {validate} from 'class-validator';
+import { validate } from 'class-validator';
 import * as uuid from 'uuid';
-import {DataSubmission} from '../../../src/api/models/DataSubmission';
-import {Status} from "../../../src/api/models/ReferentialData";
-import {SampleRegistration} from "../../../src/api/models/SampleRegistration";
+import { DataSubmission } from '../../../src/api/models/DataSubmission';
+import { Status } from '../../../src/api/models/ReferentialData';
+import { SampleRegistration } from '../../../src/api/models/SampleRegistration';
 
 describe('Validations', () => {
-
     test('Data submission validation should succeed with all required fields', async (done) => {
         const dataSubmission = new DataSubmission();
         dataSubmission.id = uuid.v1();
@@ -30,5 +29,4 @@ describe('Validations', () => {
         expect(errors.length).toEqual(0);
         done();
     });
-
 });

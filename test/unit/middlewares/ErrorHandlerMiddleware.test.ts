@@ -5,7 +5,6 @@ import { ErrorHandlerMiddleware } from '../../../src/api/middlewares/ErrorHandle
 import { LogMock } from '../lib/LogMock';
 
 describe('ErrorHandlerMiddleware', () => {
-
     let log;
     let middleware;
     let err;
@@ -34,5 +33,4 @@ describe('ErrorHandlerMiddleware', () => {
         expect(json.message).toBe(err.message);
         expect(log.errorMock).toHaveBeenCalled();
     });
-
 });

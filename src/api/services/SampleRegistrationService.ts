@@ -1,16 +1,16 @@
-import {Service} from 'typedi';
-import {Logger, LoggerInterface} from '../../decorators/Logger';
-import {OrmRepository} from 'typeorm-typedi-extensions';
-import {SampleRegistrationRepository} from '../repositories/SampleRegistrationRepository';
-import {SampleRegistration} from '../models/SampleRegistration';
-import {DataSubmission} from '../models/DataSubmission';
+import { Service } from 'typedi';
+import { Logger, LoggerInterface } from '../../decorators/Logger';
+import { OrmRepository } from 'typeorm-typedi-extensions';
+import { SampleRegistrationRepository } from '../repositories/SampleRegistrationRepository';
+import { SampleRegistration } from '../models/SampleRegistration';
+import { DataSubmission } from '../models/DataSubmission';
 
 @Service()
 export class SampleRegistrationService {
     constructor(
         @OrmRepository() private sampleRegistrationRepository: SampleRegistrationRepository,
         @Logger(__filename) private log: LoggerInterface
-    ) { }
+    ) {}
 
     public findByDataSubmission(dataSubmission: DataSubmission): Promise<SampleRegistration[]> {
         this.log.info('Find all sampleRegistrations for dataSubmission', dataSubmission.id);

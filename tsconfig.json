@@ -22,6 +22,8 @@
         "emitDecoratorMetadata": true,
         "resolveJsonModule": true,
         "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "noEmit": true,
         "lib": [
             "es5",
             "es6",

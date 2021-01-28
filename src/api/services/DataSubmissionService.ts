@@ -4,17 +4,16 @@ import { OrmRepository } from 'typeorm-typedi-extensions';
 import { EventDispatcher, EventDispatcherInterface } from '../../decorators/EventDispatcher';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { events } from '../subscribers/events';
-import {DataSubmissionRepository} from '../repositories/DataSubmissionRepository';
-import {DataSubmission} from '../models/DataSubmission';
+import { DataSubmissionRepository } from '../repositories/DataSubmissionRepository';
+import { DataSubmission } from '../models/DataSubmission';
 
 @Service()
 export class DataSubmissionService {
-
     constructor(
         @OrmRepository() private dataSubmissionRepository: DataSubmissionRepository,
         @EventDispatcher() private eventDispatcher: EventDispatcherInterface,
         @Logger(__filename) private log: LoggerInterface
-    ) { }
+    ) {}
 
     public find(): Promise<DataSubmission[]> {
         return this.dataSubmissionRepository.find({
@@ -49,5 +48,4 @@ export class DataSubmissionService {
         await this.dataSubmissionRepository.delete(id);
         return;
     }
-
 }

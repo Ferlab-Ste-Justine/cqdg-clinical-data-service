@@ -1,14 +1,13 @@
-import {EntityRepository, InsertResult, ObjectLiteral, Repository} from 'typeorm';
+import { EntityRepository, InsertResult, ObjectLiteral, Repository } from 'typeorm';
 
-import {SampleRegistration} from '../models/SampleRegistration';
+import { SampleRegistration } from '../models/SampleRegistration';
 
 @EntityRepository(SampleRegistration)
 export class SampleRegistrationRepository extends Repository<SampleRegistration> {
-
     public findByDataSubmissionIds(ids: string[]): Promise<SampleRegistration[]> {
         return this.createQueryBuilder()
             .select()
-            .where(`sampleRegistration.data_submission_id IN (${ids.map(id => `'${id}'`).join(', ')})`)
+            .where(`sampleRegistration.data_submission_id IN (${ids.map((id) => `'${id}'`).join(', ')})`)
             .getMany();
     }
 
@@ -21,5 +20,4 @@ export class SampleRegistrationRepository extends Repository<SampleRegistration>
 
         return result.identifiers;
     }
-
 }
