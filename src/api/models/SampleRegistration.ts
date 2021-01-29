@@ -1,4 +1,4 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { DataSubmission } from './DataSubmission';
 
@@ -6,14 +6,15 @@ import { DataSubmission } from './DataSubmission';
     name: 'sample_registration',
 })
 export class SampleRegistration {
-    @PrimaryGeneratedColumn('uuid')
-    public id: string;
+    @IsNumber()
+    @PrimaryGeneratedColumn('increment')
+    public id: number;
 
     @Column({
         name: 'data_submission_id',
         nullable: true,
     })
-    public dataSubmissionId: string;
+    public dataSubmissionId: number;
 
     @ManyToOne((type) => DataSubmission, (dataSubmission) => dataSubmission.registeredSamples)
     @JoinColumn({ name: 'data_submission_id' })
@@ -53,4 +54,13 @@ export class SampleRegistration {
         nullable: false,
     })
     public sampleType: string;
+
+    constructor(json: any = {}) {
+        this.id = json.id || undefined;
+        this.studyId = json.study_id || undefined;
+        this.submitterDonorId = json.submitter_donor_id || undefined;
+        this.submitterBiospecimenId = json.submitter_biospecimen_id || undefined;
+        this.submitterSampleId = json.submitter_sample_id || undefined;
+        this.sampleType = json.sample_type || undefined;
+    }
 }

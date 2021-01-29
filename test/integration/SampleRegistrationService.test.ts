@@ -57,8 +57,6 @@ describe('SampleRegistrationService', () => {
 
         const dataSubmissionWithRelations = await dataSubmissionService.findOne(dataSubmissionResultCreate.id);
 
-        console.log(JSON.stringify(dataSubmissionWithRelations));
-
         expect(dataSubmissionWithRelations.id).not.toBeUndefined();
         expect(dataSubmissionWithRelations.registeredSamples).toHaveLength(1);
 

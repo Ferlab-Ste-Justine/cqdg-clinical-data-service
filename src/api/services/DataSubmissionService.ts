@@ -6,11 +6,13 @@ import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { events } from '../subscribers/events';
 import { DataSubmissionRepository } from '../repositories/DataSubmissionRepository';
 import { DataSubmission } from '../models/DataSubmission';
+import { SampleRegistrationRepository } from '../repositories/SampleRegistrationRepository';
 
 @Service()
 export class DataSubmissionService {
     constructor(
         @OrmRepository() private dataSubmissionRepository: DataSubmissionRepository,
+        @OrmRepository() private sampleRegistrationRepository: SampleRegistrationRepository,
         @EventDispatcher() private eventDispatcher: EventDispatcherInterface,
         @Logger(__filename) private log: LoggerInterface
     ) {}
@@ -22,7 +24,7 @@ export class DataSubmissionService {
         });
     }
 
-    public findOne(id: string): Promise<DataSubmission | undefined> {
+    public findOne(id: number): Promise<DataSubmission | undefined> {
         return this.dataSubmissionRepository.findOne(
             { id },
             {
@@ -33,18 +35,27 @@ export class DataSubmissionService {
 
     public async create(dataSubmission: DataSubmission): Promise<DataSubmission> {
         const newDataSubmission = await this.dataSubmissionRepository.save(dataSubmission);
+
+        if (dataSubmission.registeredSamples?.length > 0) {
+            await this.sampleRegistrationRepository.saveAll(
+                dataSubmission.registeredSamples.map((sample) => {
+                    sample.dataSubmissionId = newDataSubmission.id;
+                    return sample;
+                })
+            );
+        }
+
         this.eventDispatcher.dispatch(events.dataSubmission.created, newDataSubmission);
         return newDataSubmission;
     }
 
-    public update(id: string, user: DataSubmission): Promise<DataSubmission> {
-        this.log.info('Update a user');
-        user.id = id;
-        return this.dataSubmissionRepository.save(user);
+    public update(dataSubmission: DataSubmission): Promise<DataSubmission> {
+        this.log.info('Update a data submission');
+        return this.dataSubmissionRepository.save(dataSubmission);
     }
 
-    public async delete(id: string): Promise<void> {
-        this.log.info('Delete a user');
+    public async delete(id: number): Promise<void> {
+        this.log.info('Delete a data submission');
         await this.dataSubmissionRepository.delete(id);
         return;
     }

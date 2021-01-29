@@ -1,4 +1,16 @@
-import { Authorized, JsonController, Post, Req, Res, UploadedFiles, UploadOptions } from 'routing-controllers';
+import {
+    Authorized,
+    CurrentUser,
+    HttpError,
+    JsonController,
+    Param,
+    Post,
+    Req,
+    Res,
+    UploadedFile,
+    UploadedFiles,
+    UploadOptions,
+} from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { FileFilterCallback, memoryStorage } from 'multer';
 import { StringStream } from 'scramjet';
@@ -10,6 +22,13 @@ import { env } from '../../env';
 import { BatchProcessingResult } from '@overturebio-stack/lectern-client/lib/schema-entities';
 import { RecordValidationError } from './responses/RecordValidationError';
 import { entities as dictionaryEntities } from '@overturebio-stack/lectern-client';
+import { DataSubmission } from '../models/DataSubmission';
+import { Status, User } from '../models/ReferentialData';
+import { SampleRegistration } from '../models/SampleRegistration';
+import { DataSubmissionService } from '../services/DataSubmissionService';
+import { SampleRegistrationService } from '../services/SampleRegistrationService';
+import latinize from 'latinize';
+import { StorageService } from '../services/StorageService';
 
 @Authorized()
 @JsonController('/upload')
@@ -30,9 +49,78 @@ export class UploadController {
         },
     };
 
-    constructor(private lecternService: LecternService, @Logger(__filename) private log: LoggerInterface) {}
+    constructor(
+        private lecternService: LecternService,
+        private dataSubmissionService: DataSubmissionService,
+        private sampleRegistrationService: SampleRegistrationService,
+        private storageService: StorageService,
+        @Logger(__filename) private log: LoggerInterface
+    ) {}
 
-    @Post()
+    @Post('/samples')
+    @OpenAPI({
+        consumes: 'multipart/form-data',
+        requestBody: {
+            description: 'Validates and registers the samples.',
+            content: {
+                'multipart/form-data': {
+                    schema: {
+                        type: 'object',
+                        properties: {
+                            file: {
+                                type: 'string',
+                                format: 'binary',
+                            },
+                        },
+                    },
+                },
+            },
+            required: true,
+        },
+    })
+    @ResponseSchema(UploadReport)
+    public async registerSamples(
+        @UploadedFile('file', UploadController.uploadOptions) file: Express.Multer.File,
+        @Req() request: any,
+        @Res() response: any,
+        @CurrentUser() user?: User
+    ): Promise<UploadReport> {
+        this.log.debug(`Validating ${file.originalname}`);
+
+        const report = new UploadReport();
+        report.files = [];
+
+        const schemas = await this.getSchemas(request);
+
+        const singleFileUploadStatus: SingleFileUploadStatus = await this.validateFile(file, schemas);
+        report.files.push(singleFileUploadStatus);
+
+        this.log.debug(JSON.stringify(report));
+
+        if (singleFileUploadStatus?.validationErrors?.length > 0) {
+            response.status(400);
+        } else {
+            const dataSubmission: DataSubmission = new DataSubmission();
+            dataSubmission.status = Status.IN_PROGRESS;
+            dataSubmission.registeredSamples = singleFileUploadStatus.processedRecords.map(
+                (row) => new SampleRegistration(row)
+            );
+
+            if (user) {
+                dataSubmission.createdBy = user.id;
+            }
+
+            const savedDataSubmission: DataSubmission = await this.dataSubmissionService.create(dataSubmission);
+            report.dataSubmissionId = savedDataSubmission.id;
+
+            console.log(file.buffer.length);
+            await this.storageService.store(`/cqdg/clinical-data/${savedDataSubmission.id}`, file.buffer);
+        }
+
+        return report;
+    }
+
+    @Post('/clinical-data/:dataSubmissionId')
     @OpenAPI({
         consumes: 'multipart/form-data',
         requestBody: {
@@ -57,35 +145,32 @@ export class UploadController {
         },
     })
     @ResponseSchema(UploadReport)
-    public async upload(
+    public async uploadClinicalData(
+        @Param('dataSubmissionId') dataSubmissionId: number,
         @UploadedFiles('files', UploadController.uploadOptions) files: Express.Multer.File[],
         @Req() request: any,
         @Res() response: any
     ): Promise<UploadReport> {
         const report = new UploadReport();
-        report.files = [];
+        const schemas = await this.getSchemas(request);
+        const dataSubmissionCount: number = await this.sampleRegistrationService.countByDataSubmission(
+            dataSubmissionId
+        );
 
-        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
-        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
-
-        const name = `${env.lectern.dictionaryName} ${lang}`.trim();
-        const schemas = await this.lecternService.fetchLatestDictionary(name);
+        if (!dataSubmissionCount || dataSubmissionCount === 0) {
+            throw new HttpError(400, `No samples are registered for data submission id ${dataSubmissionId}`);
+        }
 
         let hasErrors = false;
+
+        report.files = [];
 
         for (const f of files) {
             this.log.debug(`Validating ${f.originalname}`);
             const singleFileUploadStatus: SingleFileUploadStatus = await this.validateFile(f, schemas);
-
-            // TODO: if file is sample registration and has no errors, load in DB for lookup validation +
-            // upload file to S3 bucket.
-
-            hasErrors =
-                singleFileUploadStatus &&
-                singleFileUploadStatus.validationErrors &&
-                singleFileUploadStatus.validationErrors.length > 0;
-
             report.files.push(singleFileUploadStatus);
+
+            hasErrors = hasErrors || singleFileUploadStatus?.validationErrors?.length > 0;
         }
 
         this.log.debug(JSON.stringify(report));
@@ -124,6 +209,8 @@ export class UploadController {
                     schemas
                 );
 
+                singleFileUploadStatus.processedRecords = batch.processedRecords;
+
                 if (batch.validationErrors && batch.validationErrors.length > 0) {
                     singleFileUploadStatus.validationErrors.push(
                         batch.validationErrors.map((err) => new RecordValidationError(err))
@@ -135,14 +222,26 @@ export class UploadController {
         return singleFileUploadStatus;
     }
 
-    // TODO: Get list of available schemas and compare with file names
-    // TODO: filename : for comparison, remove extension, special char, toLowerCase, and compare with schemas
     private async selectSchema(filename: string): Promise<string> {
-        // TODO: Determine what is the logic to select the proper schema for the file that is uploaded.
-        // Filename = schema name?
-        // Column matching algorithm?
+        const filenameWithoutExtension = filename.substring(0, filename.lastIndexOf('.'));
+        const latinizedFilename = latinize(filenameWithoutExtension);
 
-        // TODO: Handle the version in the filename
-        return filename.substring(0, filename.indexOf('.'));
+        let noSpecialChars = latinizedFilename.replace(/[^a-zA-Z_]/g, '');
+
+        while (noSpecialChars.endsWith('_')) {
+            noSpecialChars = noSpecialChars.substring(0, noSpecialChars.length - 1);
+        }
+
+        return noSpecialChars.toLowerCase().trim();
+    }
+
+    private async getSchemas(request: any): Promise<dictionaryEntities.SchemasDictionary> {
+        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
+        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
+
+        const name = `${env.lectern.dictionaryName} ${lang}`.trim();
+        const schemas = await this.lecternService.fetchLatestDictionary(name);
+
+        return schemas;
     }
 }

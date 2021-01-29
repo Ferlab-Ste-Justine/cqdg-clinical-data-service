@@ -7,8 +7,9 @@ export class CreateDataSubmissionTable1611698779279 implements MigrationInterfac
             columns: [
                 {
                     name: 'id',
-                    type: 'varchar',
-                    length: '255',
+                    type: 'integer',
+                    isGenerated: true,
+                    generationStrategy: 'increment',
                     isPrimary: true,
                     isNullable: false,
                 },

@@ -6,7 +6,7 @@ import { DataSubmission } from './DataSubmission';
 })
 export class SampleRegistration {
     @Field((type) => ID)
-    public id: string;
+    public id: number;
 
     @Field({
         description: 'Unique identifier for the Study.',
@@ -36,10 +36,20 @@ export class SampleRegistration {
     @Field({
         description: 'Unique identifier of the data submission process.',
     })
-    public dataSubmissionId: string;
+    public dataSubmissionId: number;
 
     @Field((type) => DataSubmission, {
         nullable: true,
     })
     public dataSubmission: DataSubmission;
+
+    constructor(json: any) {
+        this.id = json.id || undefined;
+        this.dataSubmissionId = json.dataSubmissionId || undefined;
+        this.studyId = json.studyId || undefined;
+        this.submitterBiospecimenId = json.submitterBiospecimenId || undefined;
+        this.submitterSampleId = json.submitterSampleId || undefined;
+        this.sampleType = json.sampleType || undefined;
+        this.submitterDonorId = json.submitterDonorId || undefined;
+    }
 }

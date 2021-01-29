@@ -39,6 +39,7 @@
   ],
   "dependencies": {
     "@overturebio-stack/lectern-client": "^1.1.0",
+    "@types/latinize": "^0.2.15",
     "axios": "^0.21.1",
     "bcrypt": "^5.0.0",
     "chalk": "^4.1.0",
@@ -64,6 +65,7 @@
     "jsonfile": "^5.0.0",
     "jsonwebtoken": "^8.5.1",
     "jwk-to-pem": "^2.0.4",
+    "latinize": "^0.5.0",
     "lodash": "^4.17.20",
     "morgan": "^1.10.0",
     "multer": "^1.4.2",

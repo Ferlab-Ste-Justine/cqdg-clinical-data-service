@@ -7,8 +7,9 @@ export class CreateSampleRegistrationTable1611698915249 implements MigrationInte
             columns: [
                 {
                     name: 'id',
-                    type: 'varchar',
-                    length: '255',
+                    type: 'integer',
+                    isGenerated: true,
+                    generationStrategy: 'increment',
                     isPrimary: true,
                     isNullable: false,
                 },
@@ -49,8 +50,7 @@ export class CreateSampleRegistrationTable1611698915249 implements MigrationInte
                 },
                 {
                     name: 'data_submission_id',
-                    type: 'varchar',
-                    length: '255',
+                    type: 'integer',
                     isPrimary: false,
                     isNullable: false,
                 },

@@ -3,7 +3,6 @@ import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { OrmRepository } from 'typeorm-typedi-extensions';
 import { SampleRegistrationRepository } from '../repositories/SampleRegistrationRepository';
 import { SampleRegistration } from '../models/SampleRegistration';
-import { DataSubmission } from '../models/DataSubmission';
 
 @Service()
 export class SampleRegistrationService {
@@ -12,16 +11,25 @@ export class SampleRegistrationService {
         @Logger(__filename) private log: LoggerInterface
     ) {}
 
-    public findByDataSubmission(dataSubmission: DataSubmission): Promise<SampleRegistration[]> {
-        this.log.info('Find all sampleRegistrations for dataSubmission', dataSubmission.id);
+    public findByDataSubmission(id: number): Promise<SampleRegistration[]> {
+        this.log.debug('Find all sampleRegistrations for dataSubmission', id);
         return this.sampleRegistrationRepository.find({
             where: {
-                dataSubmissionId: dataSubmission.id,
+                dataSubmissionId: id,
             },
         });
     }
 
-    public findOne(id: string): Promise<SampleRegistration | undefined> {
+    public countByDataSubmission(id: number): Promise<number> {
+        this.log.debug('Count sampleRegistrations for dataSubmission', id);
+        return this.sampleRegistrationRepository.count({
+            where: {
+                dataSubmissionId: id,
+            },
+        });
+    }
+
+    public findOne(id: number): Promise<SampleRegistration | undefined> {
         return this.sampleRegistrationRepository.findOne({ id });
     }
 
@@ -35,12 +43,12 @@ export class SampleRegistrationService {
         return ids;
     }
 
-    public update(id: string, sampleRegistration: SampleRegistration): Promise<SampleRegistration> {
+    public update(id: number, sampleRegistration: SampleRegistration): Promise<SampleRegistration> {
         sampleRegistration.id = id;
         return this.sampleRegistrationRepository.save(sampleRegistration);
     }
 
-    public async delete(id: string): Promise<void> {
+    public async delete(id: number): Promise<void> {
         await this.sampleRegistrationRepository.delete(id);
         return;
     }

@@ -1,6 +1,6 @@
 import { BeforeInsert, BeforeUpdate, Column } from 'typeorm';
 import { Type } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 
 export class AuditEntity {
     @IsNotEmpty()
@@ -9,14 +9,14 @@ export class AuditEntity {
     })
     public createdBy: string;
 
-    @IsString()
+    @IsOptional()
     @Column({
         name: 'last_updated_by',
         nullable: true,
     })
     public lastUpdatedBy: string;
 
-    @IsDate()
+    @IsNotEmpty()
     @Column({
         name: 'creation_date',
         type: 'bigint',
@@ -31,7 +31,7 @@ export class AuditEntity {
     @Type(() => Date)
     public creationDate: Date;
 
-    @IsDate()
+    @IsOptional()
     @Column({
         name: 'last_update_date',
         type: 'bigint',
@@ -45,12 +45,12 @@ export class AuditEntity {
     public lastUpdateDate?: Date;
 
     @BeforeInsert()
-    public updateDateCreation(): void {
+    public beforeCreate(): void {
         this.creationDate = new Date();
     }
 
     @BeforeUpdate()
-    public updateDateUpdate(): void {
+    public beforeUpdate(): void {
         this.lastUpdateDate = new Date();
     }
 }

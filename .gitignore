@@ -1,6 +1,7 @@
 # CQDG
 pla.txt
 docker/postgres_data
+docker/minio_data
 
 # Logs #
 /logs

@@ -7,7 +7,7 @@ import { SampleRegistration } from './SampleRegistration';
 })
 export class DataSubmission {
     @Field((type) => ID)
-    public id: string;
+    public id: number;
 
     @Field({
         description: 'The status of the data submission process.',

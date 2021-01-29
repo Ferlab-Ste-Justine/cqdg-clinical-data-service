@@ -11,7 +11,22 @@ services:
       POSTGRES_PASSWORD: password
     ports:
       - 5532:5432
-  adminer:
+  cqdg-data-submission-adminer:
     image: adminer
     ports:
       - 5180:8080
+  cqdg-data-submission-minio:
+    image: minio/minio
+    environment:
+        - MINIO_ACCESS_KEY=minio
+        - MINIO_SECRET_KEY=minio123
+    volumes:
+        - ./minio_data:/data:delegated
+    ports:
+        - 9000:9000
+    command: server /data
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+        interval: 30s
+        timeout: 20s
+        retries: 3

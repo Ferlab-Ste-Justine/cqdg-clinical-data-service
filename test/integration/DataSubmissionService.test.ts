@@ -9,6 +9,7 @@ import * as uuid from 'uuid';
 import { UploadReport } from '../../src/api/controllers/responses/UploadReport';
 import { SingleFileUploadStatus } from '../../src/api/controllers/responses/SingleFileUploadStatus';
 import { RecordValidationError } from '../../src/api/controllers/responses/RecordValidationError';
+import { SampleRegistration } from '../../src/api/models/SampleRegistration';
 
 describe('DataSubmissionService', () => {
     // -------------------------------------------------------------------------
@@ -87,6 +88,8 @@ describe('DataSubmissionService', () => {
         const service = Container.get<DataSubmissionService>(DataSubmissionService);
         const resultCreate = await service.create(dataSubmission);
 
+        console.log(JSON.stringify(resultCreate, undefined, 2));
+
         expect(resultCreate.status).toBe(Status.IN_PROGRESS);
         expect(resultCreate.id).not.toBeUndefined();
         expect(resultCreate.creationDate).not.toBeUndefined();
@@ -101,12 +104,52 @@ describe('DataSubmissionService', () => {
 
         const resultFind = await service.findOne(resultCreate.id);
 
-        console.log(JSON.stringify(resultFind));
-
         if (resultFind) {
             expect(resultFind.id).not.toBeUndefined();
             expect(resultFind.status).toBe(Status.IN_PROGRESS);
             expect(resultFind.statusReport).not.toBeUndefined();
+        } else {
+            fail(`Could not find data submission with id ${resultCreate.id}`);
+        }
+        done();
+    });
+
+    test('should create a new data submission with samples in the database', async (done) => {
+        const dataSubmission = new DataSubmission();
+        dataSubmission.status = Status.IN_PROGRESS;
+        dataSubmission.createdBy = uuid.v1();
+        dataSubmission.registeredSamples = [];
+
+        const sample1: SampleRegistration = new SampleRegistration({
+            study_id: 'ST0001',
+            submitter_donor_id: 'PT0001',
+            submitter_biospecimen_id: 'BS0001',
+            submitter_sample_id: 'SM0001',
+            sample_type: 'Total DNA',
+        });
+
+        const sample2: SampleRegistration = new SampleRegistration({
+            study_id: 'ST0001',
+            submitter_donor_id: 'PT0001',
+            submitter_biospecimen_id: 'BS0002',
+            submitter_sample_id: 'SM0002',
+            sample_type: 'Total DNA',
+        });
+
+        dataSubmission.registeredSamples.push(sample1, sample2);
+
+        const service = Container.get<DataSubmissionService>(DataSubmissionService);
+        const resultCreate = await service.create(dataSubmission);
+
+        expect(resultCreate.id).not.toBeUndefined();
+        expect(resultCreate.registeredSamples).toHaveLength(2);
+
+        const resultFind = await service.findOne(resultCreate.id);
+
+        if (resultFind) {
+            // console.log(JSON.stringify(resultFind, undefined, 2));
+            expect(resultFind.id).not.toBeUndefined();
+            expect(resultFind.registeredSamples).toHaveLength(2);
         } else {
             fail(`Could not find data submission with id ${resultCreate.id}`);
         }

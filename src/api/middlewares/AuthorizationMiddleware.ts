@@ -36,6 +36,7 @@ export class AuthorizationMiddleware implements ExpressMiddlewareInterface {
                 .verifyOffline(accessToken && accessToken.indexOf(' ') > -1 ? accessToken.split(' ')[1] : '')
                 .then((user) => {
                     req.user = user;
+                    this.log.debug(JSON.stringify(user, undefined, 2));
                     return next();
                 })
                 .catch((err) => {
