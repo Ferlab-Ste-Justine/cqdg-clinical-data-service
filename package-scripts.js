@@ -2,7 +2,7 @@
  * Windows: Please do not use trailing comma as windows will fail with token error
  */
 
-const { series, rimraf, } = require('nps-utils');
+const { series, rimraf } = require('nps-utils');
 
 module.exports = {
     scripts: {
@@ -19,36 +19,26 @@ module.exports = {
          */
         serve: {
             inspector: {
-                script: series(
-                    'nps banner.serve',
-                    'nodemon --watch src --watch .env --inspect'
-                ),
-                description: 'Serves the current app and watches for changes to restart it, you may attach inspector to it.'
+                script: series('nps banner.serve', 'nodemon --watch src --watch .env --inspect'),
+                description:
+                    'Serves the current app and watches for changes to restart it, you may attach inspector to it.',
             },
-            script: series(
-                'nps banner.serve',
-                'nodemon --watch src --watch .env'
-            ),
-            description: 'Serves the current app and watches for changes to restart it'
+            script: series('nps banner.serve', 'nodemon --watch src --watch .env'),
+            description: 'Serves the current app and watches for changes to restart it',
         },
         /**
          * Setup of the development environment
          */
         setup: {
-            script: series(
-                'npm install',
-                'nps db.setup',
-            ),
-            description: 'Setup`s the development environment(npm & database)'
+            script: series('npm install', 'nps db.setup'),
+            description: 'Setup`s the development environment(npm & database)',
         },
         /**
          * Creates the needed configuration files
          */
         config: {
-            script: series(
-                runFast('./commands/tsconfig.ts'),
-            ),
-            hiddenFromHelp: true
+            script: series(runFast('./commands/tsconfig.ts')),
+            hiddenFromHelp: true,
         },
         /**
          * Builds the app into the dist directory
@@ -62,68 +52,57 @@ module.exports = {
                 'nps transpile',
                 'nps copy',
                 'nps copy.tmp',
-                'nps clean.tmp',
+                'nps clean.tmp'
             ),
-            description: 'Builds the app into the dist directory'
+            description: 'Builds the app into the dist directory',
         },
         /**
          * Runs TSLint over your project
          */
         lint: {
             script: tslint(`./src/**/*.ts`),
-            hiddenFromHelp: true
+            hiddenFromHelp: true,
         },
         /**
          * Transpile your app into javascript
          */
         transpile: {
             script: `tsc --project ./tsconfig.build.json`,
-            hiddenFromHelp: true
+            hiddenFromHelp: true,
         },
         /**
          * Clean files and folders
          */
         clean: {
             default: {
-                script: series(
-                    `nps banner.clean`,
-                    `nps clean.dist`
-                ),
-                description: 'Deletes the ./dist folder'
+                script: series(`nps banner.clean`, `nps clean.dist`),
+                description: 'Deletes the ./dist folder',
             },
             dist: {
                 script: rimraf('./dist'),
-                hiddenFromHelp: true
+                hiddenFromHelp: true,
             },
             tmp: {
                 script: rimraf('./.tmp'),
-                hiddenFromHelp: true
-            }
+                hiddenFromHelp: true,
+            },
         },
         /**
          * Copies static files to the build folder
          */
         copy: {
             default: {
-                script: series(
-                    `nps copy.public`
-                ),
-                hiddenFromHelp: true
+                script: series(`nps copy.public`),
+                hiddenFromHelp: true,
             },
             public: {
-                script: copy(
-                    './src/public/*',
-                    './dist'
-                ),
-                hiddenFromHelp: true
+                script: copy('./src/public/*', './dist'),
+                hiddenFromHelp: true,
             },
             tmp: {
-                script: copyDir(
-                    './.tmp/src',
-                    './dist'
-                ),
-                hiddenFromHelp: true
-            }
+                script: copyDir('./.tmp/src', './dist'),
+                hiddenFromHelp: true,
+            },
         },
         /**
          * Database scripts
@@ -135,7 +114,7 @@ module.exports = {
                     'nps config',
                     runFast('./node_modules/typeorm/cli.js migration:run')
                 ),
-                description: 'Migrates the database to newest version available'
+                description: 'Migrates the database to newest version available',
             },
             revert: {
                 script: series(
@@ -143,7 +122,7 @@ module.exports = {
                     'nps config',
                     runFast('./node_modules/typeorm/cli.js migration:revert')
                 ),
-                description: 'Downgrades the database'
+                description: 'Downgrades the database',
             },
             seed: {
                 script: series(
@@ -151,20 +130,16 @@ module.exports = {
                     'nps config',
                     runFast('./node_modules/typeorm-seeding/dist/cli.js seed')
                 ),
-                description: 'Seeds generated records into the database'
+                description: 'Seeds generated records into the database',
             },
             drop: {
                 script: runFast('./node_modules/typeorm/cli.js schema:drop'),
-                description: 'Drops the schema of the database'
+                description: 'Drops the schema of the database',
             },
             setup: {
-                script: series(
-                    'nps db.drop',
-                    'nps db.migrate',
-                    'nps db.seed'
-                ),
-                description: 'Recreates the database with seeded data'
-            }
+                script: series('nps db.drop', 'nps db.migrate', 'nps db.seed'),
+                description: 'Recreates the database with seeded data',
+            },
         },
         /**
          * These run various kinds of tests. Default is unit.
@@ -173,29 +148,25 @@ module.exports = {
             default: 'nps test.unit',
             unit: {
                 default: {
-                    script: series(
-                        'nps banner.testUnit',
-                        'nps test.unit.pretest',
-                        'nps test.unit.run'
-                    ),
-                    description: 'Runs the unit tests'
+                    script: series('nps banner.testUnit', 'nps test.unit.pretest', 'nps test.unit.run'),
+                    description: 'Runs the unit tests',
                 },
                 pretest: {
                     script: tslint(`./test/unit/**.ts`),
-                    hiddenFromHelp: true
+                    hiddenFromHelp: true,
                 },
                 run: {
                     script: 'cross-env NODE_ENV=test jest --testPathPattern=unit',
-                    hiddenFromHelp: true
+                    hiddenFromHelp: true,
                 },
                 verbose: {
                     script: 'nps "test --verbose"',
-                    hiddenFromHelp: true
+                    hiddenFromHelp: true,
                 },
                 coverage: {
                     script: 'nps "test --coverage"',
-                    hiddenFromHelp: true
-                }
+                    hiddenFromHelp: true,
+                },
             },
             integration: {
                 default: {
@@ -204,53 +175,50 @@ module.exports = {
                         'nps test.integration.pretest',
                         'nps test.integration.run'
                     ),
-                    description: 'Runs the integration tests'
+                    description: 'Runs the integration tests',
                 },
                 pretest: {
                     script: tslint(`./test/integration/**.ts`),
-                    hiddenFromHelp: true
+                    hiddenFromHelp: true,
                 },
                 run: {
                     // -i. Run all tests serially in the current process, rather than creating a worker pool of child processes that run tests. This can be useful for debugging.
                     script: 'cross-env NODE_ENV=test jest --testPathPattern=integration -i',
-                    hiddenFromHelp: true
+                    hiddenFromHelp: true,
                 },
                 verbose: {
                     script: 'nps "test --verbose"',
-                    hiddenFromHelp: true
+                    hiddenFromHelp: true,
                 },
                 coverage: {
                     script: 'nps "test --coverage"',
-                    hiddenFromHelp: true
-                }
+                    hiddenFromHelp: true,
+                },
             },
             e2e: {
                 default: {
-                    script: series(
-                        'nps banner.testE2E',
-                        'nps test.e2e.pretest',
-                        'nps test.e2e.run'
-                    ),
-                    description: 'Runs the e2e tests'
+                    script: series('nps banner.testE2E', 'nps test.e2e.pretest', 'nps test.e2e.run'),
+                    description: 'Runs the e2e tests',
                 },
                 pretest: {
                     script: tslint(`./test/e2e/**.ts`),
-                    hiddenFromHelp: true
+                    hiddenFromHelp: true,
                 },
                 run: {
                     // -i. Run all tests serially in the current process, rather than creating a worker pool of child processes that run tests. This can be useful for debugging.
                     // --forceExit because the use of Axios in the test seems to leave an opened handle.
-                    script: 'cross-env NODE_ENV=test jest --testTimeout=20000 --testPathPattern=e2e -i --forceExit',
-                    hiddenFromHelp: true
+                    script:
+                        'cross-env NODE_ENV=test jest --testTimeout=10000 --testPathPattern=e2e -i --forceExit --verbose=false',
+                    hiddenFromHelp: true,
                 },
                 verbose: {
                     script: 'nps "test --verbose"',
-                    hiddenFromHelp: true
+                    hiddenFromHelp: true,
                 },
                 coverage: {
                     script: 'nps "test --coverage"',
-                    hiddenFromHelp: true
-                }
+                    hiddenFromHelp: true,
+                },
             },
         },
         /**
@@ -265,9 +233,9 @@ module.exports = {
             migrate: banner('migrate'),
             seed: banner('seed'),
             revert: banner('revert'),
-            clean: banner('clean')
-        }
-    }
+            clean: banner('clean'),
+        },
+    },
 };
 
 function banner(name) {

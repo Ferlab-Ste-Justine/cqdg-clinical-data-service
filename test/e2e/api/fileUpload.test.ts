@@ -1,4 +1,4 @@
-import { bootstrapApp, BootstrapSettings } from '../utils/bootstrap';
+import { bootstrapApp, BootstrapSettings, startMinio, stopMinio } from '../utils/bootstrap';
 import fs from 'fs';
 import path from 'path';
 import request from 'supertest';
@@ -17,89 +17,84 @@ describe('/api', () => {
 
     let settings: BootstrapSettings;
     let dataSubmissionId: number;
-    let formDataOptions: any;
+    let authToken: string;
 
-    const loadSamples = async () => {
-        const form = new FormData();
-        form.append(
-            'file',
-            fs.createReadStream(path.resolve(__dirname, '../../resources/sample_registration.csv')),
-            formDataOptions
-        );
-
-        axios
-            .post('http://localhost:' + env.app.port + `/api/upload/samples`, form, {
-                headers: form.getHeaders(),
-            })
-            .then((response) => {
-                console.log(`Sample registration loaded with id ${response.data.dataSubmissionId}`);
-                dataSubmissionId = response.data.dataSubmissionId;
-            })
-            .catch((error) => {
-                throw error;
-            });
+    const getHeaders = (form: FormData = undefined): any => {
+        const headers = form ? form.getHeaders() : {};
+        headers.Authorization = `Bearer ${authToken}`;
+        return headers;
     };
 
-    beforeAll(async () => {
+    const loadSamples = async () => {
+        /*const form = new FormData();
+        form.append('file', fs.createReadStream(path.resolve(__dirname, '../../resources/sample_registration.csv')));
+
+        try {
+            const response = await axios.post('http://localhost:' + env.app.port + `/api/upload/samples`, form, {
+                headers: getHeaders(form),
+            });
+            dataSubmissionId = response.data.dataSubmissionId;
+        } catch (err) {
+            fail(`Failed to load test registration sample.\n\r${JSON.stringify(err, undefined, 2)}`);
+        }*/
+
+        try {
+            const response = await request(settings.app)
+                .post(`/api/upload/samples`)
+                .set('Accept', 'text/tab-separated-values')
+                .set('Content-Type', 'text/tab-separated-values; charset=utf-8')
+                .set('Accept-Language', 'en')
+                .set('Authorization', `Bearer ${authToken}`)
+                .attach('file', fs.createReadStream(path.resolve(__dirname, '../../resources/sample_registration.csv')))
+                .expect(200);
+
+            dataSubmissionId = response.body.dataSubmissionId;
+        } catch (err) {
+            fail(err);
+        }
+    };
+
+    beforeAll(async (done) => {
         settings = await bootstrapApp();
+
+        await startMinio();
+
+        authToken = await getAuthToken();
+        if (!authToken) {
+            fail('Failed to acquire auth token.');
+        }
+
         await loadSamples();
 
-        const authToken: string = await getAuthToken();
-        formDataOptions = {
-            header: {
-                Authorization: `Bearer ${authToken}`,
-            },
-        };
+        done();
+    });
+
+    afterAll(async () => {
+        await stopMinio();
     });
 
     // -------------------------------------------------------------------------
     // Test cases
     // -------------------------------------------------------------------------
 
-    /*test('POST: /api/upload/samples should return validation errors', async (done) => {
-        await request(settings.app)
-            .post('/api/upload/clinical-data')
-            .set('Accept', 'text/tab-separated-values')
-            .set('Content-Type', 'text/tab-separated-values; charset=utf-8')
-            .set('Accept-Language', 'en')
-            .attach('files', fs.createReadStream(path.resolve(__dirname, '../../resources/sample_registration.csv')))
-            .expect(200)
-            .expect('Content-Type', /json/)
-            .end((err, res) => {
-                console.log(JSON.stringify(err, undefined, 2));
-                console.log(JSON.stringify(res, undefined, 2));
-            });
-
-        done();
-    });*/
-
     test.skip('POST: /api/upload/clinical-data should return validation errors - axios example', async (done) => {
         const form = new FormData();
-        form.append(
-            'files',
-            fs.createReadStream(path.resolve(__dirname, '../../resources/biospecimen.tsv')),
-            formDataOptions
-        );
-        form.append(
-            'files',
-            fs.createReadStream(path.resolve(__dirname, '../../resources/donor.tsv')),
-            formDataOptions
-        );
+        form.append('files', fs.createReadStream(path.resolve(__dirname, '../../resources/biospecimen.tsv')));
+        form.append('files', fs.createReadStream(path.resolve(__dirname, '../../resources/donor.tsv')));
 
         axios
             .post('http://localhost:' + env.app.port + `/api/upload/clinical-data/${dataSubmissionId}`, form, {
-                headers: form.getHeaders(),
+                headers: getHeaders(form),
             })
             .then((response) => {
                 expect(response.status).toEqual(400);
                 expect(response.headers['content-type']).toEqual('application/json; charset=utf-8');
-                done();
             })
             .catch((error) => {
                 expect(error.response.status).toEqual(400);
                 expect(error.response.headers['content-type']).toEqual('application/json; charset=utf-8');
-                done();
-            });
+            })
+            .finally(() => done());
     });
 
     test('POST: /api/upload/clinical-data should return validation errors', async (done) => {
@@ -108,7 +103,7 @@ describe('/api', () => {
             .set('Accept', 'text/tab-separated-values')
             .set('Content-Type', 'text/tab-separated-values; charset=utf-8')
             .set('Accept-Language', 'en')
-            .set('Authorization', formDataOptions.header.Authorization)
+            .set('Authorization', `Bearer ${authToken}`)
             .attach('files', fs.createReadStream(path.resolve(__dirname, '../../resources/biospecimen.tsv')))
             .attach('files', fs.createReadStream(path.resolve(__dirname, '../../resources/donor.tsv')))
             .expect(400)
@@ -123,6 +118,7 @@ describe('/api', () => {
             .set('Accept', 'text/tab-separated-values')
             .set('Content-Type', 'text/tab-separated-values; charset=utf-8')
             .set('Accept-Language', 'en')
+            .set('Authorization', `Bearer ${authToken}`)
             .expect(400);
         done();
     });

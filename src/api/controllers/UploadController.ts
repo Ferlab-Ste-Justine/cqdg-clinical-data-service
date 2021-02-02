@@ -16,19 +16,19 @@ import { FileFilterCallback, memoryStorage } from 'multer';
 import { StringStream } from 'scramjet';
 import { LecternService } from '../services/LecternService';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
-import { UploadReport } from './responses/UploadReport';
-import { SingleFileUploadStatus } from './responses/SingleFileUploadStatus';
+import { ValidationReport } from './responses/ValidationReport';
+import { SingleFileValidationStatus } from './responses/SingleFileValidationStatus';
 import { env } from '../../env';
 import { BatchProcessingResult } from '@overturebio-stack/lectern-client/lib/schema-entities';
 import { RecordValidationError } from './responses/RecordValidationError';
 import { entities as dictionaryEntities } from '@overturebio-stack/lectern-client';
 import { DataSubmission } from '../models/DataSubmission';
-import { Status, User } from '../models/ReferentialData';
-import { SampleRegistration } from '../models/SampleRegistration';
+import { User } from '../models/ReferentialData';
 import { DataSubmissionService } from '../services/DataSubmissionService';
 import { SampleRegistrationService } from '../services/SampleRegistrationService';
 import latinize from 'latinize';
 import { StorageService } from '../services/StorageService';
+import { SystemError } from '../errors/SystemError';
 
 @Authorized()
 @JsonController('/upload')
@@ -78,43 +78,73 @@ export class UploadController {
             required: true,
         },
     })
-    @ResponseSchema(UploadReport)
+    @ResponseSchema(ValidationReport)
     public async registerSamples(
         @UploadedFile('file', UploadController.uploadOptions) file: Express.Multer.File,
         @Req() request: any,
         @Res() response: any,
-        @CurrentUser() user?: User
-    ): Promise<UploadReport> {
+        @CurrentUser() user: User
+    ): Promise<ValidationReport> {
+        return await this.updateRegisteredSamples(file, request, response, user, NaN);
+    }
+
+    @Post('/samples/:dataSubmissionId')
+    @OpenAPI({
+        consumes: 'multipart/form-data',
+        requestBody: {
+            description: 'Validates and registers the samples.',
+            content: {
+                'multipart/form-data': {
+                    schema: {
+                        type: 'object',
+                        properties: {
+                            file: {
+                                type: 'string',
+                                format: 'binary',
+                            },
+                        },
+                    },
+                },
+            },
+            required: true,
+        },
+    })
+    @ResponseSchema(ValidationReport)
+    public async updateRegisteredSamples(
+        @UploadedFile('file', UploadController.uploadOptions) file: Express.Multer.File,
+        @Req() request: any,
+        @Res() response: any,
+        @CurrentUser() user: User,
+        @Param('dataSubmissionId') dataSubmissionId: number
+    ): Promise<ValidationReport> {
         this.log.debug(`Validating ${file.originalname}`);
 
-        const report = new UploadReport();
+        const report = new ValidationReport();
         report.files = [];
 
         const schemas = await this.getSchemas(request);
 
-        const singleFileUploadStatus: SingleFileUploadStatus = await this.validateFile(file, schemas);
-        report.files.push(singleFileUploadStatus);
+        const singleFileValidationStatus: SingleFileValidationStatus = await this.validateFile(file, schemas);
+        report.files.push(singleFileValidationStatus);
 
         this.log.debug(JSON.stringify(report));
 
-        if (singleFileUploadStatus?.validationErrors?.length > 0) {
+        if (singleFileValidationStatus?.validationErrors?.length > 0) {
             response.status(400);
         } else {
-            const dataSubmission: DataSubmission = new DataSubmission();
-            dataSubmission.status = Status.IN_PROGRESS;
-            dataSubmission.registeredSamples = singleFileUploadStatus.processedRecords.map(
-                (row) => new SampleRegistration(row)
+            const dataSubmission: DataSubmission = await this.dataSubmissionService.createOrUpdate(
+                dataSubmissionId,
+                singleFileValidationStatus.processedRecords,
+                user
             );
 
-            if (user) {
-                dataSubmission.createdBy = user.id;
-            }
+            const errors: SystemError[] = await this.saveFile(
+                `clinical-data/${user.id}.tmp/${dataSubmission.id}/${singleFileValidationStatus.schemaName}.tsv`,
+                file
+            );
 
-            const savedDataSubmission: DataSubmission = await this.dataSubmissionService.create(dataSubmission);
-            report.dataSubmissionId = savedDataSubmission.id;
-
-            console.log(file.buffer.length);
-            await this.storageService.store(`/cqdg/clinical-data/${savedDataSubmission.id}`, file.buffer);
+            report.dataSubmissionId = dataSubmission.id;
+            report.errors = errors;
         }
 
         return report;
@@ -144,14 +174,15 @@ export class UploadController {
             required: true,
         },
     })
-    @ResponseSchema(UploadReport)
+    @ResponseSchema(ValidationReport)
     public async uploadClinicalData(
         @Param('dataSubmissionId') dataSubmissionId: number,
         @UploadedFiles('files', UploadController.uploadOptions) files: Express.Multer.File[],
         @Req() request: any,
-        @Res() response: any
-    ): Promise<UploadReport> {
-        const report = new UploadReport();
+        @Res() response: any,
+        @CurrentUser() user?: User
+    ): Promise<ValidationReport> {
+        const report = new ValidationReport();
         const schemas = await this.getSchemas(request);
         const dataSubmissionCount: number = await this.sampleRegistrationService.countByDataSubmission(
             dataSubmissionId
@@ -164,13 +195,30 @@ export class UploadController {
         let hasErrors = false;
 
         report.files = [];
+        report.errors = [];
 
         for (const f of files) {
             this.log.debug(`Validating ${f.originalname}`);
-            const singleFileUploadStatus: SingleFileUploadStatus = await this.validateFile(f, schemas);
-            report.files.push(singleFileUploadStatus);
+            const singleFileValidationStatus: SingleFileValidationStatus = await this.validateFile(f, schemas);
 
-            hasErrors = hasErrors || singleFileUploadStatus?.validationErrors?.length > 0;
+            // FOR TESTING PURPOSES
+            // singleFileValidationStatus.validationErrors = [];
+
+            report.files.push(singleFileValidationStatus);
+
+            hasErrors = hasErrors || singleFileValidationStatus.validationErrors.length > 0;
+
+            if (singleFileValidationStatus.validationErrors.length === 0) {
+                // N.B.: There will always be a dataSubmissionId here; thus, it will always update, not create.
+                this.saveFile(
+                    `clinical-data/${user.id}.tmp/${dataSubmissionId}/${singleFileValidationStatus.schemaName}.tsv`,
+                    f
+                ).then((errors) => {
+                    if (errors && errors.length > 0) {
+                        report.errors.push(...errors);
+                    }
+                });
+            }
         }
 
         this.log.debug(JSON.stringify(report));
@@ -184,12 +232,13 @@ export class UploadController {
     private async validateFile(
         file: Express.Multer.File,
         schemas: dictionaryEntities.SchemasDictionary
-    ): Promise<SingleFileUploadStatus> {
-        const singleFileUploadStatus: SingleFileUploadStatus = new SingleFileUploadStatus();
-        singleFileUploadStatus.filename = file.originalname;
-        singleFileUploadStatus.validationErrors = [];
+    ): Promise<SingleFileValidationStatus> {
+        const singleFileValidationStatus: SingleFileValidationStatus = new SingleFileValidationStatus();
+        singleFileValidationStatus.filename = file.originalname;
+        singleFileValidationStatus.validationErrors = [];
 
         const schemaForCurrentFile = await this.selectSchema(file.originalname);
+        singleFileValidationStatus.schemaName = schemaForCurrentFile;
 
         await StringStream.from(file.buffer.toString('utf-8'), { maxParallel: 2 })
             .CSVParse({
@@ -209,21 +258,41 @@ export class UploadController {
                     schemas
                 );
 
-                singleFileUploadStatus.processedRecords = batch.processedRecords;
+                singleFileValidationStatus.processedRecords = batch.processedRecords;
 
                 if (batch.validationErrors && batch.validationErrors.length > 0) {
-                    singleFileUploadStatus.validationErrors.push(
+                    singleFileValidationStatus.validationErrors.push(
                         batch.validationErrors.map((err) => new RecordValidationError(err))
                     );
                 }
             })
             .run();
 
-        return singleFileUploadStatus;
+        return singleFileValidationStatus;
+    }
+
+    private async saveFile(filename: string, file: Express.Multer.File): Promise<SystemError[]> {
+        let errors: SystemError[];
+
+        try {
+            // Saved in s3 to eventually be processed by ETL
+            await this.storageService.store(filename, file.buffer);
+        } catch (error) {
+            errors = Object.keys(error).map(
+                (key) =>
+                    new SystemError(
+                        error[key].Code,
+                        `Error: ${error[key].name}, Bucket: ${error[key].BucketName}, File: ${filename}`,
+                        error[key]
+                    )
+            );
+        }
+
+        return errors;
     }
 
     private async selectSchema(filename: string): Promise<string> {
-        const filenameWithoutExtension = filename.substring(0, filename.lastIndexOf('.'));
+        const filenameWithoutExtension = filename.substring(0, filename.indexOf('.'));
         const latinizedFilename = latinize(filenameWithoutExtension);
 
         let noSpecialChars = latinizedFilename.replace(/[^a-zA-Z_]/g, '');

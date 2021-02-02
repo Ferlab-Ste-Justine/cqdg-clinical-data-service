@@ -6,8 +6,8 @@ import { DataSubmission } from '../../src/api/models/DataSubmission';
 import { DataSubmissionService } from '../../src/api/services/DataSubmissionService';
 import { Status } from '../../src/api/models/ReferentialData';
 import * as uuid from 'uuid';
-import { UploadReport } from '../../src/api/controllers/responses/UploadReport';
-import { SingleFileUploadStatus } from '../../src/api/controllers/responses/SingleFileUploadStatus';
+import { ValidationReport } from '../../src/api/controllers/responses/ValidationReport';
+import { SingleFileValidationStatus } from '../../src/api/controllers/responses/SingleFileValidationStatus';
 import { RecordValidationError } from '../../src/api/controllers/responses/RecordValidationError';
 import { SampleRegistration } from '../../src/api/models/SampleRegistration';
 
@@ -32,15 +32,15 @@ describe('DataSubmissionService', () => {
     // -------------------------------------------------------------------------
     // Utility methods
     // -------------------------------------------------------------------------
-    const getUploadReport = (): UploadReport => {
-        const uploadReport: UploadReport = new UploadReport();
+    const getUploadReport = (): ValidationReport => {
+        const uploadReport: ValidationReport = new ValidationReport();
         uploadReport.files = [];
 
-        const reportFile1: SingleFileUploadStatus = new SingleFileUploadStatus();
+        const reportFile1: SingleFileValidationStatus = new SingleFileValidationStatus();
         reportFile1.filename = 'donors.tsv';
         reportFile1.validationErrors = [];
 
-        const reportFile2: SingleFileUploadStatus = new SingleFileUploadStatus();
+        const reportFile2: SingleFileValidationStatus = new SingleFileValidationStatus();
         reportFile2.filename = 'biospecimen.tsv';
         reportFile2.validationErrors = [];
 

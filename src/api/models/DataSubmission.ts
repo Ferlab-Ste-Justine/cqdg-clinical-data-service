@@ -23,7 +23,7 @@ import { Status } from './ReferentialData';
 import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
 import { AuditEntity } from './AuditEntity';
 import { SampleRegistration } from './SampleRegistration';
-import { UploadReport } from '../controllers/responses/UploadReport';
+import { ValidationReport } from '../controllers/responses/ValidationReport';
 import { DbAwareColumn } from '../../decorators/DBAwareColumn';
 import { Type } from 'class-transformer';
 
@@ -42,13 +42,13 @@ export class DataSubmission extends AuditEntity {
     public status: Status;
 
     @ValidateNested({ each: true })
-    @Type(() => UploadReport)
+    @Type(() => ValidationReport)
     @DbAwareColumn({
         name: 'status_report',
         type: 'json',
         nullable: true,
     })
-    public statusReport: UploadReport;
+    public statusReport: ValidationReport;
 
     @OneToMany((type) => SampleRegistration, (sampleRegistration) => sampleRegistration.dataSubmission)
     public registeredSamples: SampleRegistration[];

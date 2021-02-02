@@ -1,7 +1,7 @@
 {
-  "name": "cqdg-data-submission",
+  "name": "cqdg-clinical-data-service",
   "version": "1.0.0",
-  "description": "Clinical data submission and validation",
+  "description": "Clinical data service for submission and validation",
   "main": "src/app.ts",
   "scripts": {
     "start": "nps",
@@ -13,7 +13,7 @@
   "engines": {
     "node": ">=8.0.0"
   },
-  "repository": "git+ssh://git@github.com/w3tec/express-typescript-boilerplate.git",
+  "repository": "git@github.com:Ferlab-Ste-Justine/cqdg-clinical-data-service.git",
   "keywords": [
     "NodeJS",
     "TypeScript",
@@ -23,21 +23,12 @@
     "starter-kit",
     "w3tec.ch"
   ],
-  "homepage": "https://github.com/w3tec/express-typescript-boilerplate#readme",
-  "author": "w3tec.ch <info@w3tec.ch>",
-  "contributors": [
-    {
-      "name": "David Weber",
-      "email": "david.weber@w3tec.ch",
-      "url": "https://github.com/dweber019"
-    },
-    {
-      "name": "Gery Hirschfeld",
-      "email": "gery.hirschfeld@w3tec.ch",
-      "url": "https://github.com/hirsch88"
-    }
-  ],
+  "homepage": "https://github.com/Ferlab-Ste-Justine/cqdg-clinical-data-service#readme",
+  "author": "plaplante",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.4.1",
+    "@aws-sdk/node-http-handler": "^3.4.1",
+    "@aws-sdk/types": "^3.4.1",
     "@overturebio-stack/lectern-client": "^1.1.0",
     "@types/latinize": "^0.2.15",
     "axios": "^0.21.1",
@@ -138,6 +129,7 @@
     "@types/uuid": "^8.3.0",
     "@types/winston": "^2.4.4",
     "cross-env": "^7.0.3",
+    "cwd": "^0.10.0",
     "jest": "^26.6.3",
     "mock-express-request": "^0.2.2",
     "mock-express-response": "^0.3.0",

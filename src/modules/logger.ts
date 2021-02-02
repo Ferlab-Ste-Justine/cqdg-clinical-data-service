@@ -18,7 +18,7 @@ export const configureLogger = () =>
             ? {
                   transports: [
                       new transports.Console({
-                          level: 'none',
+                          level: env.log.level,
                           handleExceptions: false,
                       }),
                   ],

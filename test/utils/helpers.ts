@@ -11,11 +11,15 @@ export async function getAuthToken(): Promise<string> {
     params.append('client_id', env.auth.clientId);
     params.append('client_secret', env.auth.testClientSecret);
 
-    const response = await axios.post(tokenUrl, params, {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-    });
+    try {
+        const response = await axios.post(tokenUrl, params, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
 
-    return response.data.access_token;
+        return response.data.access_token;
+    } catch (err) {
+        return undefined;
+    }
 }

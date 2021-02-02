@@ -10,6 +10,10 @@ import { currentUserChecker } from '../../../src/auth/currentUserChecker';
 import { configureIOC } from '../../../src/modules/ioc';
 import { configureLogger } from '../../../src/modules/logger';
 import { configureEventDispatcher } from '../../../src/modules/dispatcher';
+import { spawn } from 'child_process';
+import cwd from 'cwd';
+import axios from 'axios';
+import { sleep } from '@overturebio-stack/lectern-client/lib/utils';
 
 export interface BootstrapSettings {
     app: Application;
@@ -51,4 +55,51 @@ export const bootstrapApp = async (): Promise<BootstrapSettings> => {
         server: expressServer,
         connection: connection,
     } as BootstrapSettings;
+};
+
+export const startMinio = async (): Promise<void> => {
+    process.stdout.write('Starting Minio\r\n');
+
+    const command = 'sh ./test/startMinio.sh';
+    const args = [];
+    const options = {
+        shell: true,
+        cwd: cwd(),
+    };
+
+    spawn(command, args, options);
+    await minioReady();
+
+    process.stdout.write('Minio is ready\r\n');
+};
+
+export const stopMinio = () => {
+    process.stdout.write('Stopping Minio\r\n');
+
+    const command = 'sh ./test/stopMinio.sh';
+    const args = [];
+    const options = {
+        shell: true,
+        cwd: cwd(),
+    };
+
+    spawn(command, args, options);
+};
+
+export const minioReady = async (): Promise<void> => {
+    let isReady = false;
+
+    // No need for timeout as the Jest already has a timeout (see package-scripts.js)
+    while (!isReady) {
+        await sleep(1000);
+        process.stdout.write('Waiting for Minio to be ready.\r\n');
+        axios
+            .get(`${env.s3.serviceEndpoint}/minio/health/live`)
+            .then((res) => {
+                isReady = true;
+            })
+            .catch((err) => {
+                // not ready yet
+            });
+    }
 };

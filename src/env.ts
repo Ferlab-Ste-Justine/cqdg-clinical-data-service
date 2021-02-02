@@ -92,4 +92,11 @@ export const env = {
         username: getOsEnv('MONITOR_USERNAME'),
         password: getOsEnv('MONITOR_PASSWORD'),
     },
+    s3: {
+        signingRegion: getOsEnvOptional('S3_SIGNIN_REGION', 'chusj'),
+        bucketName: getOsEnvOptional('S3_BUCKET_NAME', 'cqdg'),
+        serviceEndpoint: getOsEnv('S3_SERVICE_ENDPOINT'),
+        accessKey: getOsEnv('S3_ACCESS_KEY'),
+        secretKey: getOsEnv('S3_SECRET_KEY'),
+    },
 };

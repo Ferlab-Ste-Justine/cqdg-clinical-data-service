@@ -52,7 +52,7 @@ describe('DataSubmissionService', () => {
     });
 
     test('Select proper schema based on file name', async (done) => {
-        const uploadController = new UploadController({} as any, {} as any, {} as any, {} as any);
+        const uploadController = new UploadController({} as any, {} as any, {} as any, {} as any, {} as any);
         expect(await uploadController['selectSchema']('sample_registration.csv')).toEqual('sample_registration');
 
         // test for accents

@@ -29,11 +29,14 @@ export class LecternService {
                 latestVersion = versions.data
                     .filter((d) => name === d.name)
                     .sort((a, b) => {
-                        if (a.version < b.version) {
-                            return -1;
-                        }
-                        if (a.version > b.version) {
+                        const versionA = parseFloat(a.version);
+                        const versionB = parseFloat(b.version);
+
+                        if (versionA < versionB) {
                             return 1;
+                        }
+                        if (versionA > versionB) {
+                            return -1;
                         }
                         return 0;
                     })[0].version;
@@ -73,7 +76,7 @@ export class LecternService {
         }
 
         try {
-            const res = dictionaryService.processRecords(schemasDictionary, schemaName, records);
+            const res = await dictionaryService.processRecords(schemasDictionary, schemaName, records);
             return res;
         } catch (err) {
             this.log.error(err);
