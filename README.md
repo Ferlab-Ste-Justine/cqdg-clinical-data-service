@@ -123,7 +123,7 @@ The swagger and the monitor route can be altered in the `.env` file.
 | **/graphql**   | Route to the graphql editor or your query/mutations requests |
 | **/swagger**   | This is the Swagger UI with our API documentation |
 | **/monitor**   | Shows a small monitor page for the server |
-| **/api/upload**| Example entity endpoint |
+| **/api/submission**| Example entity endpoint |
 
 ![divider](divider.png)
 

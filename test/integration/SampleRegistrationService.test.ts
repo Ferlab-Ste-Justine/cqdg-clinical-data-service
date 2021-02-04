@@ -36,7 +36,8 @@ describe('SampleRegistrationService', () => {
         const sampleRegistrationService = Container.get<SampleRegistrationService>(SampleRegistrationService);
 
         const dataSubmission = new DataSubmission();
-        dataSubmission.status = Status.IN_PROGRESS;
+        dataSubmission.code = 'TEST';
+        dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = uuid.v1();
 
         const dataSubmissionResultCreate = await dataSubmissionService.create(dataSubmission);

@@ -1,6 +1,17 @@
 export enum Status {
-    IN_PROGRESS = 'IN_PROGRESS',
+    INITIATED = 'INITIATED',
+    SAMPLES_REGISTERED = 'SAMPLES_REGISTERED',
+    CLINICAL_DATA_INITIATED = 'CLINICAL_DATA_INITIATED',
+    CLINICAL_DATA_VALIDATED = 'CLINICAL_DATA_VALIDATED',
     COMPLETED = 'COMPLETED',
+}
+
+export enum SampleRegistrationFieldsEnum {
+    study_id = 'study_id',
+    submitter_donor_id = 'submitter_donor_id',
+    submitter_biospecimen_id = 'submitter_biospecimen_id',
+    submitter_sample_id = 'submitter_sample_id',
+    sample_type = 'sample_type',
 }
 
 export interface IKeycloakUser {

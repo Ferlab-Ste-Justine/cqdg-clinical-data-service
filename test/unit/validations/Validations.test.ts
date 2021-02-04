@@ -8,7 +8,8 @@ describe('Validations', () => {
     test('Data submission validation should succeed with all required fields', async (done) => {
         const dataSubmission = new DataSubmission();
         dataSubmission.id = 1;
-        dataSubmission.status = Status.IN_PROGRESS;
+        dataSubmission.code = 'TEST';
+        dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = uuid.v1();
         dataSubmission.creationDate = new Date();
 

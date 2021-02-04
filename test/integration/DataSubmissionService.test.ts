@@ -81,7 +81,8 @@ describe('DataSubmissionService', () => {
 
     test('should create a new data submission in the database', async (done) => {
         const dataSubmission = new DataSubmission();
-        dataSubmission.status = Status.IN_PROGRESS;
+        dataSubmission.code = 'TEST';
+        dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = uuid.v1();
         dataSubmission.statusReport = getUploadReport();
 
@@ -90,7 +91,7 @@ describe('DataSubmissionService', () => {
 
         console.log(JSON.stringify(resultCreate, undefined, 2));
 
-        expect(resultCreate.status).toBe(Status.IN_PROGRESS);
+        expect(resultCreate.status).toBe(Status.INITIATED);
         expect(resultCreate.id).not.toBeUndefined();
         expect(resultCreate.creationDate).not.toBeUndefined();
 
@@ -106,7 +107,7 @@ describe('DataSubmissionService', () => {
 
         if (resultFind) {
             expect(resultFind.id).not.toBeUndefined();
-            expect(resultFind.status).toBe(Status.IN_PROGRESS);
+            expect(resultFind.status).toBe(Status.INITIATED);
             expect(resultFind.statusReport).not.toBeUndefined();
         } else {
             fail(`Could not find data submission with id ${resultCreate.id}`);
@@ -116,7 +117,8 @@ describe('DataSubmissionService', () => {
 
     test('should create a new data submission with samples in the database', async (done) => {
         const dataSubmission = new DataSubmission();
-        dataSubmission.status = Status.IN_PROGRESS;
+        dataSubmission.code = 'TEST';
+        dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = uuid.v1();
         dataSubmission.registeredSamples = [];
 

@@ -52,4 +52,8 @@ export class SampleRegistrationService {
         await this.sampleRegistrationRepository.delete(id);
         return;
     }
+
+    public async lookup(dataSubmissionId: number, field: string, values: string[]): Promise<any> {
+        return await this.sampleRegistrationRepository.lookup(dataSubmissionId, field, values);
+    }
 }

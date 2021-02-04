@@ -15,7 +15,7 @@ describe('DataSubmissionService', () => {
         const sampleRegistrationRepo = new RepositoryMock();
         const ed = new EventDispatcherMock();
         const dataSubmission = new DataSubmission();
-        dataSubmission.status = Status.IN_PROGRESS;
+        dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = uuid.v1();
         dataSubmission.creationDate = new Date();
         dataSubmissionRepo.list = [dataSubmission];
@@ -26,7 +26,7 @@ describe('DataSubmissionService', () => {
             log
         );
         const list = await dataSubmissionService.find();
-        expect(list[0].status).toBe(Status.IN_PROGRESS);
+        expect(list[0].status).toBe(Status.INITIATED);
         done();
     });
 
@@ -36,7 +36,7 @@ describe('DataSubmissionService', () => {
         const sampleRegistrationRepo = new RepositoryMock();
         const ed = new EventDispatcherMock();
         const dataSubmission = new DataSubmission();
-        dataSubmission.status = Status.IN_PROGRESS;
+        dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = uuid.v1();
         dataSubmission.creationDate = new Date();
         dataSubmissionRepo.list = [dataSubmission];

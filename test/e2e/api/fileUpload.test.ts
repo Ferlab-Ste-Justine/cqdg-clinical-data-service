@@ -30,17 +30,38 @@ describe('/api', () => {
         form.append('file', fs.createReadStream(path.resolve(__dirname, '../../resources/sample_registration.csv')));
 
         try {
-            const response = await axios.post('http://localhost:' + env.app.port + `/api/upload/samples`, form, {
+            const res1 = await axios.post(
+                `http://localhost:${env.app.port}/api/submission/TEST-SUBMISSION`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                    },
+                }
+            );
+
+            dataSubmissionId = res1.data;
+
+            await axios.post(`http://localhost:${env.app.port}/api/submission/${dataSubmissionId}/samples`, form, {
                 headers: getHeaders(form),
             });
-            dataSubmissionId = response.data.dataSubmissionId;
         } catch (err) {
             fail(`Failed to load test registration sample.\n\r${JSON.stringify(err, undefined, 2)}`);
         }*/
 
         try {
-            const response = await request(settings.app)
-                .post(`/api/upload/samples`)
+            const res1 = await request(settings.app)
+                .post(`/api/submission/TEST-SUBMISSION`)
+                .set('Accept', 'application/json')
+                .set('Content-Type', 'application/json; charset=utf-8')
+                .set('Accept-Language', 'en')
+                .set('Authorization', `Bearer ${authToken}`)
+                .expect(200);
+
+            dataSubmissionId = res1.body;
+
+            const res2 = await request(settings.app)
+                .post(`/api/submission/${dataSubmissionId}/samples`)
                 .set('Accept', 'text/tab-separated-values')
                 .set('Content-Type', 'text/tab-separated-values; charset=utf-8')
                 .set('Accept-Language', 'en')
@@ -48,7 +69,7 @@ describe('/api', () => {
                 .attach('file', fs.createReadStream(path.resolve(__dirname, '../../resources/sample_registration.csv')))
                 .expect(200);
 
-            dataSubmissionId = response.body.dataSubmissionId;
+            console.log(JSON.stringify(res2.body, undefined, 2));
         } catch (err) {
             fail(err);
         }
@@ -76,14 +97,13 @@ describe('/api', () => {
     // -------------------------------------------------------------------------
     // Test cases
     // -------------------------------------------------------------------------
-
-    test.skip('POST: /api/upload/clinical-data should return validation errors - axios example', async (done) => {
+    test.skip('POST: /api/submission/${dataSubmissionId}/clinical-data should return validation errors - axios example', async (done) => {
         const form = new FormData();
         form.append('files', fs.createReadStream(path.resolve(__dirname, '../../resources/biospecimen.tsv')));
         form.append('files', fs.createReadStream(path.resolve(__dirname, '../../resources/donor.tsv')));
 
         axios
-            .post('http://localhost:' + env.app.port + `/api/upload/clinical-data/${dataSubmissionId}`, form, {
+            .post(`http://localhost:${env.app.port}/api/submission/${dataSubmissionId}/clinical-data`, form, {
                 headers: getHeaders(form),
             })
             .then((response) => {
@@ -97,9 +117,9 @@ describe('/api', () => {
             .finally(() => done());
     });
 
-    test('POST: /api/upload/clinical-data should return validation errors', async (done) => {
+    test('POST: /api/submission/${dataSubmissionId}/clinical-data should return validation errors', async (done) => {
         await request(settings.app)
-            .post(`/api/upload/clinical-data/${dataSubmissionId}`)
+            .post(`/api/submission/${dataSubmissionId}/clinical-data`)
             .set('Accept', 'text/tab-separated-values')
             .set('Content-Type', 'text/tab-separated-values; charset=utf-8')
             .set('Accept-Language', 'en')
@@ -112,9 +132,9 @@ describe('/api', () => {
         done();
     });
 
-    test('POST: /api/upload/clinical-data should crash because no files', async (done) => {
+    test('POST: /api/submission/${dataSubmissionId}/clinical-data should crash because no files', async (done) => {
         await request(settings.app)
-            .post(`/api/upload/clinical-data/${dataSubmissionId}`)
+            .post(`/api/submission/${dataSubmissionId}/clinical-data`)
             .set('Accept', 'text/tab-separated-values')
             .set('Content-Type', 'text/tab-separated-values; charset=utf-8')
             .set('Accept-Language', 'en')

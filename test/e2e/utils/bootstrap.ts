@@ -2,7 +2,7 @@ import * as express from 'express';
 import { Application } from 'express';
 import * as http from 'http';
 import { Connection } from 'typeorm/connection/Connection';
-import { createDatabaseConnection } from '../../utils/database';
+import { createDatabaseConnection, migrateDatabase } from '../../utils/database';
 import { createExpressServer } from 'routing-controllers';
 import { env } from '../../../src/env';
 import { authorizationChecker } from '../../../src/auth/authorizationChecker';
@@ -23,6 +23,8 @@ export interface BootstrapSettings {
 
 export const bootstrapApp = async (): Promise<BootstrapSettings> => {
     const connection = await createDatabaseConnection();
+
+    await migrateDatabase(connection);
 
     configureLogger();
     configureIOC();

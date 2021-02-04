@@ -39,6 +39,12 @@ export class DataSubmission extends AuditEntity {
     @Column({
         type: 'varchar',
     })
+    public code: string;
+
+    @IsNotEmpty()
+    @Column({
+        type: 'varchar',
+    })
     public status: Status;
 
     @ValidateNested({ each: true })

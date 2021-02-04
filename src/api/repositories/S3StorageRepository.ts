@@ -1,6 +1,14 @@
 import { Readable } from 'stream';
 import { Service } from 'typedi';
-import { CreateBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+    CreateBucketCommand,
+    DeleteObjectsCommand,
+    DeleteObjectsCommandOutput,
+    ListObjectsV2Command,
+    ListObjectsV2CommandOutput,
+    PutObjectCommand,
+    S3Client,
+} from '@aws-sdk/client-s3';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { Credentials } from '@aws-sdk/types';
 import { Provider } from '@aws-sdk/types/types/util';
@@ -29,8 +37,24 @@ export class S3StorageRepository {
     }
 
     public async deleteDirectory(directoryPath: string): Promise<void> {
-        throw new Error('Not implemented.');
-        return Promise.resolve(undefined);
+        const files: string[] = await this.listFiles(directoryPath);
+
+        const request = {
+            Bucket: env.s3.bucketName,
+            Delete: {
+                Objects: files.map((f) => {
+                    return {
+                        Key: f,
+                    };
+                }),
+                Quiet: false,
+            },
+        };
+
+        const result: DeleteObjectsCommandOutput = await this.s3.send(new DeleteObjectsCommand(request));
+        if (result.Errors?.length > 0) {
+            throw new Error(JSON.stringify(result.Errors, undefined, 2));
+        }
     }
 
     public async deleteFile(filepath: string): Promise<void> {
@@ -39,8 +63,23 @@ export class S3StorageRepository {
     }
 
     public async listFiles(directoryPath: string): Promise<string[]> {
-        throw new Error('Not implemented.');
-        return Promise.resolve([]);
+        const request = {
+            Bucket: env.s3.bucketName,
+            Prefix: `${directoryPath}/`,
+            ContinuationToken: undefined,
+        };
+
+        const files: string[] = [];
+        let result: ListObjectsV2CommandOutput;
+        do {
+            result = await this.s3.send(new ListObjectsV2Command(request));
+            if (result?.Contents) {
+                files.push(...result.Contents.map((o) => o.Key));
+            }
+            request.ContinuationToken = result.NextContinuationToken;
+        } while (result.IsTruncated);
+
+        return files;
     }
 
     public async read(filepath: string): Promise<Readable | Buffer> {
@@ -61,7 +100,7 @@ export class S3StorageRepository {
             }
         }
 
-        const objectParams = {
+        const request = {
             Bucket: env.s3.bucketName,
             Key: filename,
             Body: file,
@@ -70,7 +109,7 @@ export class S3StorageRepository {
         };
 
         try {
-            const results = await this.s3.send(new PutObjectCommand(objectParams));
+            const results = await this.s3.send(new PutObjectCommand(request));
             this.log.debug('Successfully uploaded data to ' + env.s3.bucketName + '/' + filename, results);
         } catch (err) {
             this.log.error(`Failed to save ${filename}`, err);

@@ -1,12 +1,15 @@
 import {
     Authorized,
     CurrentUser,
+    Delete,
     HttpError,
     JsonController,
+    NotFoundError,
     Param,
     Post,
     Req,
     Res,
+    UnauthorizedError,
     UploadedFile,
     UploadedFiles,
     UploadOptions,
@@ -19,19 +22,23 @@ import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { ValidationReport } from './responses/ValidationReport';
 import { SingleFileValidationStatus } from './responses/SingleFileValidationStatus';
 import { env } from '../../env';
-import { BatchProcessingResult } from '@overturebio-stack/lectern-client/lib/schema-entities';
+import {
+    BatchProcessingResult,
+    SchemaValidationErrorTypes,
+} from '@overturebio-stack/lectern-client/lib/schema-entities';
 import { RecordValidationError } from './responses/RecordValidationError';
 import { entities as dictionaryEntities } from '@overturebio-stack/lectern-client';
 import { DataSubmission } from '../models/DataSubmission';
-import { User } from '../models/ReferentialData';
+import { SampleRegistrationFieldsEnum, Status, User } from '../models/ReferentialData';
 import { DataSubmissionService } from '../services/DataSubmissionService';
 import { SampleRegistrationService } from '../services/SampleRegistrationService';
 import latinize from 'latinize';
 import { StorageService } from '../services/StorageService';
 import { SystemError } from '../errors/SystemError';
+import { SampleRegistration } from '../models/SampleRegistration';
 
 @Authorized()
-@JsonController('/upload')
+@JsonController('/submission')
 @OpenAPI({})
 // @OpenAPI({ security: [{ cqdgAuth: [] }] })
 export class UploadController {
@@ -57,7 +64,53 @@ export class UploadController {
         @Logger(__filename) private log: LoggerInterface
     ) {}
 
-    @Post('/samples')
+    /**
+     * Step 1 - Create a submission to initiate the process
+     *
+     * @param code
+     * @param user
+     */
+    @Post('/:code')
+    public async create(@Param('code') code: string, @CurrentUser() user: User): Promise<number> {
+        const dataSubmission: DataSubmission = new DataSubmission();
+        dataSubmission.code = code;
+        dataSubmission.status = Status.INITIATED;
+        dataSubmission.createdBy = user.id;
+
+        const savedDataSubmission: DataSubmission = await this.dataSubmissionService.create(dataSubmission);
+        return savedDataSubmission.id;
+    }
+
+    @Delete('/:dataSubmissionId')
+    public async delete(@Param('dataSubmissionId') dataSubmissionId: number, @CurrentUser() user: User): Promise<void> {
+        if (!(await this.isAllowed(user, dataSubmissionId))) {
+            throw new UnauthorizedError(`User ${user.id} not allowed to delete submission ${dataSubmissionId}`);
+        }
+
+        try {
+            await this.dataSubmissionService.delete(dataSubmissionId);
+            try {
+                await this.storageService.deleteDirectory(`clinical-data/${user.id}.tmp/${dataSubmissionId}`);
+            } catch (err1) {
+                // No files found - ignore.
+            }
+            try {
+                await this.storageService.deleteDirectory(`clinical-data/${user.id}/${dataSubmissionId}`);
+            } catch (err2) {
+                // No files found - ignore.
+            }
+        } catch (err3) {
+            throw new NotFoundError(`No submission with id ${dataSubmissionId}.`);
+        }
+    }
+
+    /**
+     * Step 2 - Register samples or update previously registered samples
+     *
+     * @param code
+     * @param user
+     */
+    @Post('/:dataSubmissionId/samples')
     @OpenAPI({
         consumes: 'multipart/form-data',
         requestBody: {
@@ -83,48 +136,22 @@ export class UploadController {
         @UploadedFile('file', UploadController.uploadOptions) file: Express.Multer.File,
         @Req() request: any,
         @Res() response: any,
-        @CurrentUser() user: User
-    ): Promise<ValidationReport> {
-        return await this.updateRegisteredSamples(file, request, response, user, NaN);
-    }
-
-    @Post('/samples/:dataSubmissionId')
-    @OpenAPI({
-        consumes: 'multipart/form-data',
-        requestBody: {
-            description: 'Validates and registers the samples.',
-            content: {
-                'multipart/form-data': {
-                    schema: {
-                        type: 'object',
-                        properties: {
-                            file: {
-                                type: 'string',
-                                format: 'binary',
-                            },
-                        },
-                    },
-                },
-            },
-            required: true,
-        },
-    })
-    @ResponseSchema(ValidationReport)
-    public async updateRegisteredSamples(
-        @UploadedFile('file', UploadController.uploadOptions) file: Express.Multer.File,
-        @Req() request: any,
-        @Res() response: any,
         @CurrentUser() user: User,
         @Param('dataSubmissionId') dataSubmissionId: number
     ): Promise<ValidationReport> {
-        this.log.debug(`Validating ${file.originalname}`);
+        if (!(await this.isAllowed(user, dataSubmissionId))) {
+            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
+        }
 
         const report = new ValidationReport();
         report.files = [];
 
         const schemas = await this.getSchemas(request);
-
-        const singleFileValidationStatus: SingleFileValidationStatus = await this.validateFile(file, schemas);
+        const singleFileValidationStatus: SingleFileValidationStatus = await this.validateFile(
+            file,
+            schemas,
+            undefined
+        );
         report.files.push(singleFileValidationStatus);
 
         this.log.debug(JSON.stringify(report));
@@ -132,16 +159,23 @@ export class UploadController {
         if (singleFileValidationStatus?.validationErrors?.length > 0) {
             response.status(400);
         } else {
-            const dataSubmission: DataSubmission = await this.dataSubmissionService.createOrUpdate(
-                dataSubmissionId,
-                singleFileValidationStatus.processedRecords,
-                user
+            const dataSubmission: DataSubmission = new DataSubmission();
+            dataSubmission.id = dataSubmissionId;
+            dataSubmission.lastUpdatedBy = user.id;
+            dataSubmission.registeredSamples = singleFileValidationStatus.processedRecords?.map(
+                (row) => new SampleRegistration(row)
             );
 
+            const savedDataSubmission: DataSubmission = await this.dataSubmissionService.update(dataSubmission);
+
             const errors: SystemError[] = await this.saveFile(
-                `clinical-data/${user.id}.tmp/${dataSubmission.id}/${singleFileValidationStatus.schemaName}.tsv`,
+                `clinical-data/${user.id}.tmp/${savedDataSubmission.id}/${file.originalname}`,
                 file
             );
+
+            if (errors?.length > 0) {
+                response.status(500);
+            }
 
             report.dataSubmissionId = dataSubmission.id;
             report.errors = errors;
@@ -150,7 +184,13 @@ export class UploadController {
         return report;
     }
 
-    @Post('/clinical-data/:dataSubmissionId')
+    /**
+     * Step 3 - Submit clinical data
+     *
+     * @param code
+     * @param user
+     */
+    @Post('/:dataSubmissionId/clinical-data')
     @OpenAPI({
         consumes: 'multipart/form-data',
         requestBody: {
@@ -182,6 +222,10 @@ export class UploadController {
         @Res() response: any,
         @CurrentUser() user?: User
     ): Promise<ValidationReport> {
+        if (!(await this.isAllowed(user, dataSubmissionId))) {
+            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
+        }
+
         const report = new ValidationReport();
         const schemas = await this.getSchemas(request);
         const dataSubmissionCount: number = await this.sampleRegistrationService.countByDataSubmission(
@@ -199,7 +243,11 @@ export class UploadController {
 
         for (const f of files) {
             this.log.debug(`Validating ${f.originalname}`);
-            const singleFileValidationStatus: SingleFileValidationStatus = await this.validateFile(f, schemas);
+            const singleFileValidationStatus: SingleFileValidationStatus = await this.validateFile(
+                f,
+                schemas,
+                dataSubmissionId
+            );
 
             // FOR TESTING PURPOSES
             // singleFileValidationStatus.validationErrors = [];
@@ -210,14 +258,13 @@ export class UploadController {
 
             if (singleFileValidationStatus.validationErrors.length === 0) {
                 // N.B.: There will always be a dataSubmissionId here; thus, it will always update, not create.
-                this.saveFile(
-                    `clinical-data/${user.id}.tmp/${dataSubmissionId}/${singleFileValidationStatus.schemaName}.tsv`,
-                    f
-                ).then((errors) => {
-                    if (errors && errors.length > 0) {
-                        report.errors.push(...errors);
+                this.saveFile(`clinical-data/${user.id}.tmp/${dataSubmissionId}/${f.originalname}`, f).then(
+                    (errors) => {
+                        if (errors && errors.length > 0) {
+                            report.errors.push(...errors);
+                        }
                     }
-                });
+                );
             }
         }
 
@@ -231,7 +278,8 @@ export class UploadController {
 
     private async validateFile(
         file: Express.Multer.File,
-        schemas: dictionaryEntities.SchemasDictionary
+        schemas: dictionaryEntities.SchemasDictionary,
+        dataSubmissionId: number
     ): Promise<SingleFileValidationStatus> {
         const singleFileValidationStatus: SingleFileValidationStatus = new SingleFileValidationStatus();
         singleFileValidationStatus.filename = file.originalname;
@@ -240,6 +288,7 @@ export class UploadController {
         const schemaForCurrentFile = await this.selectSchema(file.originalname);
         singleFileValidationStatus.schemaName = schemaForCurrentFile;
 
+        const entries: any[] = [];
         await StringStream.from(file.buffer.toString('utf-8'), { maxParallel: 2 })
             .CSVParse({
                 delimiter: '\t',
@@ -250,25 +299,68 @@ export class UploadController {
                     console.log('Row:', results.data);
                 }*/
             })
-            .batch(500)
+            .batch(100)
             .each(async (results: any[]) => {
-                const batch: BatchProcessingResult = await this.lecternService.validateRecords(
-                    schemaForCurrentFile,
-                    results,
-                    schemas
-                );
-
-                singleFileValidationStatus.processedRecords = batch.processedRecords;
-
-                if (batch.validationErrors && batch.validationErrors.length > 0) {
-                    singleFileValidationStatus.validationErrors.push(
-                        batch.validationErrors.map((err) => new RecordValidationError(err))
-                    );
-                }
+                entries.push(...results);
             })
             .run();
 
+        const batch: Promise<BatchProcessingResult> = this.lecternService.validateRecords(
+            schemaForCurrentFile,
+            entries,
+            schemas
+        );
+
+        let unregisteredData: Promise<RecordValidationError[]> = Promise.resolve([]);
+
+        if (dataSubmissionId) {
+            unregisteredData = this.validateAgainstRegisteredSamples(entries, dataSubmissionId);
+        }
+
+        await Promise.all([unregisteredData, batch]).then((values) => {
+            // Sample registration lookup results
+            singleFileValidationStatus.validationErrors.push(...values[0]);
+
+            // Lectern validation results
+            singleFileValidationStatus.processedRecords = values[1].processedRecords;
+
+            if (values[1].validationErrors && values[1].validationErrors.length > 0) {
+                singleFileValidationStatus.validationErrors.push(
+                    values[1].validationErrors.map((err) => new RecordValidationError(err))
+                );
+            }
+        });
+
         return singleFileValidationStatus;
+    }
+
+    private async validateAgainstRegisteredSamples(
+        entries: any[],
+        dataSubmissionId: number
+    ): Promise<RecordValidationError[]> {
+        const errors: RecordValidationError[] = [];
+
+        // Search entries for values corresponding to the columns the SampleRegistration
+        for (const key of Object.keys(SampleRegistrationFieldsEnum)) {
+            // Retrieve the list of values that are not in the lookup table.
+            const result = await this.sampleRegistrationService.lookup(
+                dataSubmissionId,
+                key,
+                entries.map((entry) => entry[key]).filter((val) => val !== undefined)
+            );
+            if (result) {
+                const error: RecordValidationError = new RecordValidationError({});
+                error.errorType = SchemaValidationErrorTypes.INVALID_FIELD_VALUE_TYPE;
+                error.fieldName = key;
+                error.message = `The following ${key} : (${result.map(
+                    (entry) => entry[key]
+                )}) are not part of the registered samples for this submission`;
+
+                errors.push(error);
+            }
+        }
+
+        return errors;
     }
 
     private async saveFile(filename: string, file: Express.Multer.File): Promise<SystemError[]> {
@@ -312,5 +404,19 @@ export class UploadController {
         const schemas = await this.lecternService.fetchLatestDictionary(name);
 
         return schemas;
+    }
+
+    private async isAllowed(user: User, dataSubmissionId: number): Promise<boolean> {
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
+
+        if (!dataSubmission) {
+            throw new NotFoundError(`Data submission with id ${dataSubmissionId} does not exist.`);
+        }
+
+        // SUGGESTION:
+        // Call Keycloak to retrieve user roles and organization of dataSubmission.createdBy user and compare the
+        // roles & organization of the current user with the ones of the user who initially created the submission
+
+        return user.id === dataSubmission.createdBy;
     }
 }
