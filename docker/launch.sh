@@ -12,6 +12,6 @@ if [ ! -d "$MINIO_DIRECTORY" ]; then
 fi
 
 if [ -z `docker-compose ps -q cqdg-data-submission-postgres` ] || [ -z `docker ps -q --no-trunc | grep $(docker-compose ps -q cqdg-data-submission-postgres)` ]; then
-    docker-compose up -d;
+    docker-compose up -d --remove-orphans;
     sleep 2;
 fi

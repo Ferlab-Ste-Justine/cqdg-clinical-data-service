@@ -16,26 +16,19 @@ import {
 } from 'routing-controllers';
 import { OpenAPI, ResponseSchema } from 'routing-controllers-openapi';
 import { FileFilterCallback, memoryStorage } from 'multer';
-import { StringStream } from 'scramjet';
-import { LecternService } from '../services/LecternService';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { ValidationReport } from './responses/ValidationReport';
 import { SingleFileValidationStatus } from './responses/SingleFileValidationStatus';
 import { env } from '../../env';
-import {
-    BatchProcessingResult,
-    SchemaValidationErrorTypes,
-} from '@overturebio-stack/lectern-client/lib/schema-entities';
-import { RecordValidationError } from './responses/RecordValidationError';
-import { entities as dictionaryEntities } from '@overturebio-stack/lectern-client';
 import { DataSubmission } from '../models/DataSubmission';
-import { SampleRegistrationFieldsEnum, Status, User } from '../models/ReferentialData';
+import { Status, User } from '../models/ReferentialData';
 import { DataSubmissionService } from '../services/DataSubmissionService';
 import { SampleRegistrationService } from '../services/SampleRegistrationService';
-import latinize from 'latinize';
 import { StorageService } from '../services/StorageService';
 import { SystemError } from '../errors/SystemError';
 import { SampleRegistration } from '../models/SampleRegistration';
+import { entities as dictionaryEntities } from '@overturebio-stack/lectern-client';
+import { LecternService } from '../services/LecternService';
 
 @Authorized()
 @JsonController('/submission')
@@ -147,7 +140,7 @@ export class UploadController {
         report.files = [];
 
         const schemas = await this.getSchemas(request);
-        const singleFileValidationStatus: SingleFileValidationStatus = await this.validateFile(
+        const singleFileValidationStatus: SingleFileValidationStatus = await this.dataSubmissionService.validateFile(
             file,
             schemas,
             undefined
@@ -168,9 +161,9 @@ export class UploadController {
 
             const savedDataSubmission: DataSubmission = await this.dataSubmissionService.update(dataSubmission);
 
-            const errors: SystemError[] = await this.saveFile(
+            const errors: SystemError[] = await this.storageService.store(
                 `clinical-data/${user.id}.tmp/${savedDataSubmission.id}/${file.originalname}`,
-                file
+                file.buffer
             );
 
             if (errors?.length > 0) {
@@ -243,7 +236,8 @@ export class UploadController {
 
         for (const f of files) {
             this.log.debug(`Validating ${f.originalname}`);
-            const singleFileValidationStatus: SingleFileValidationStatus = await this.validateFile(
+
+            const singleFileValidationStatus: SingleFileValidationStatus = await this.dataSubmissionService.validateFile(
                 f,
                 schemas,
                 dataSubmissionId
@@ -258,13 +252,13 @@ export class UploadController {
 
             if (singleFileValidationStatus.validationErrors.length === 0) {
                 // N.B.: There will always be a dataSubmissionId here; thus, it will always update, not create.
-                this.saveFile(`clinical-data/${user.id}.tmp/${dataSubmissionId}/${f.originalname}`, f).then(
-                    (errors) => {
+                this.storageService
+                    .store(`clinical-data/${user.id}.tmp/${dataSubmissionId}/${f.originalname}`, f.buffer)
+                    .then((errors) => {
                         if (errors && errors.length > 0) {
                             report.errors.push(...errors);
                         }
-                    }
-                );
+                    });
             }
         }
 
@@ -276,124 +270,17 @@ export class UploadController {
         return report;
     }
 
-    private async validateFile(
-        file: Express.Multer.File,
-        schemas: dictionaryEntities.SchemasDictionary,
-        dataSubmissionId: number
-    ): Promise<SingleFileValidationStatus> {
-        const singleFileValidationStatus: SingleFileValidationStatus = new SingleFileValidationStatus();
-        singleFileValidationStatus.filename = file.originalname;
-        singleFileValidationStatus.validationErrors = [];
+    /**
+     * Step 4 - Cross validate the data
+     */
+    @Post('/:dataSubmissionId/clinical-data/validate')
+    public async applyValidationRules(
+        @Param('dataSubmissionId') dataSubmissionId: number,
+        @CurrentUser() user: User
+    ): Promise<ValidationReport> {
+        const report = new ValidationReport();
 
-        const schemaForCurrentFile = await this.selectSchema(file.originalname);
-        singleFileValidationStatus.schemaName = schemaForCurrentFile;
-
-        const entries: any[] = [];
-        await StringStream.from(file.buffer.toString('utf-8'), { maxParallel: 2 })
-            .CSVParse({
-                delimiter: '\t',
-                header: true,
-                skipEmptyLines: true,
-                worker: true,
-                /*step: function(results) {
-                    console.log('Row:', results.data);
-                }*/
-            })
-            .batch(100)
-            .each(async (results: any[]) => {
-                entries.push(...results);
-            })
-            .run();
-
-        const batch: Promise<BatchProcessingResult> = this.lecternService.validateRecords(
-            schemaForCurrentFile,
-            entries,
-            schemas
-        );
-
-        let unregisteredData: Promise<RecordValidationError[]> = Promise.resolve([]);
-
-        if (dataSubmissionId) {
-            unregisteredData = this.validateAgainstRegisteredSamples(entries, dataSubmissionId);
-        }
-
-        await Promise.all([unregisteredData, batch]).then((values) => {
-            // Sample registration lookup results
-            singleFileValidationStatus.validationErrors.push(...values[0]);
-
-            // Lectern validation results
-            singleFileValidationStatus.processedRecords = values[1].processedRecords;
-
-            if (values[1].validationErrors && values[1].validationErrors.length > 0) {
-                singleFileValidationStatus.validationErrors.push(
-                    values[1].validationErrors.map((err) => new RecordValidationError(err))
-                );
-            }
-        });
-
-        return singleFileValidationStatus;
-    }
-
-    private async validateAgainstRegisteredSamples(
-        entries: any[],
-        dataSubmissionId: number
-    ): Promise<RecordValidationError[]> {
-        const errors: RecordValidationError[] = [];
-
-        // Search entries for values corresponding to the columns the SampleRegistration
-        for (const key of Object.keys(SampleRegistrationFieldsEnum)) {
-            // Retrieve the list of values that are not in the lookup table.
-            const result = await this.sampleRegistrationService.lookup(
-                dataSubmissionId,
-                key,
-                entries.map((entry) => entry[key]).filter((val) => val !== undefined)
-            );
-            if (result) {
-                const error: RecordValidationError = new RecordValidationError({});
-                error.errorType = SchemaValidationErrorTypes.INVALID_FIELD_VALUE_TYPE;
-                error.fieldName = key;
-                error.message = `The following ${key} : (${result.map(
-                    (entry) => entry[key]
-                )}) are not part of the registered samples for this submission`;
-
-                errors.push(error);
-            }
-        }
-
-        return errors;
-    }
-
-    private async saveFile(filename: string, file: Express.Multer.File): Promise<SystemError[]> {
-        let errors: SystemError[];
-
-        try {
-            // Saved in s3 to eventually be processed by ETL
-            await this.storageService.store(filename, file.buffer);
-        } catch (error) {
-            errors = Object.keys(error).map(
-                (key) =>
-                    new SystemError(
-                        error[key].Code,
-                        `Error: ${error[key].name}, Bucket: ${error[key].BucketName}, File: ${filename}`,
-                        error[key]
-                    )
-            );
-        }
-
-        return errors;
-    }
-
-    private async selectSchema(filename: string): Promise<string> {
-        const filenameWithoutExtension = filename.substring(0, filename.indexOf('.'));
-        const latinizedFilename = latinize(filenameWithoutExtension);
-
-        let noSpecialChars = latinizedFilename.replace(/[^a-zA-Z_]/g, '');
-
-        while (noSpecialChars.endsWith('_')) {
-            noSpecialChars = noSpecialChars.substring(0, noSpecialChars.length - 1);
-        }
-
-        return noSpecialChars.toLowerCase().trim();
+        return report;
     }
 
     private async getSchemas(request: any): Promise<dictionaryEntities.SchemasDictionary> {

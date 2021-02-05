@@ -36,10 +36,11 @@ export class SampleRegistrationRepository extends Repository<SampleRegistration>
 
         // NB: We do the following to prevent SQL Injection.  The "field" comes from an Enum thus it is safe.
         const [query, parameters] = await entityManager.connection.driver.escapeQueryWithParameters(
-            `SELECT t.${field} FROM (VALUES ${Object.keys(queryValues)
+            `WITH inputs(${field}) AS (SELECT * FROM (VALUES ${Object.keys(queryValues)
                 .filter((x) => 'dataSubmissionId' !== x)
                 .map((v) => `(:${v})`)
-                .join(',')}) AS t (${field}) ` +
+                .join(',')}) AS x)
+                SELECT t.${field} FROM inputs AS t ` +
                 `LEFT JOIN sample_registration sr on sr.${field} = t.${field} AND sr.data_submission_id = :dataSubmissionId ` +
                 `WHERE sr.${field} is null;`,
             queryValues,

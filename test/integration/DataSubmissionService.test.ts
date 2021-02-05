@@ -89,8 +89,6 @@ describe('DataSubmissionService', () => {
         const service = Container.get<DataSubmissionService>(DataSubmissionService);
         const resultCreate = await service.create(dataSubmission);
 
-        console.log(JSON.stringify(resultCreate, undefined, 2));
-
         expect(resultCreate.status).toBe(Status.INITIATED);
         expect(resultCreate.id).not.toBeUndefined();
         expect(resultCreate.creationDate).not.toBeUndefined();
@@ -149,7 +147,6 @@ describe('DataSubmissionService', () => {
         const resultFind = await service.findOne(resultCreate.id);
 
         if (resultFind) {
-            // console.log(JSON.stringify(resultFind, undefined, 2));
             expect(resultFind.id).not.toBeUndefined();
             expect(resultFind.registeredSamples).toHaveLength(2);
         } else {

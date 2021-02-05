@@ -41,6 +41,8 @@
     "compression": "^1.7.4",
     "copyfiles": "^2.4.1",
     "cors": "^2.8.5",
+    "data-forge": "^1.8.17",
+    "data-forge-fs": "0.0.9",
     "dataloader": "^2.0.0",
     "dotenv": "6.0.0",
     "event-dispatch": "^0.4.1",

@@ -60,7 +60,7 @@ describe('/api', () => {
 
             dataSubmissionId = res1.body;
 
-            const res2 = await request(settings.app)
+            await request(settings.app)
                 .post(`/api/submission/${dataSubmissionId}/samples`)
                 .set('Accept', 'text/tab-separated-values')
                 .set('Content-Type', 'text/tab-separated-values; charset=utf-8')
@@ -69,7 +69,7 @@ describe('/api', () => {
                 .attach('file', fs.createReadStream(path.resolve(__dirname, '../../resources/sample_registration.csv')))
                 .expect(200);
 
-            console.log(JSON.stringify(res2.body, undefined, 2));
+            console.log(`>>>>>>>>>> Samples loaded for data submission ${dataSubmissionId}.`);
         } catch (err) {
             fail(err);
         }

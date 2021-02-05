@@ -2,14 +2,30 @@ import { Readable } from 'stream';
 import { Service } from 'typedi';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { S3StorageRepository } from '../repositories/S3StorageRepository';
+import { SystemError } from '../errors/SystemError';
 
 @Service()
 export class StorageService {
     constructor(private storage: S3StorageRepository, @Logger(__filename) private log: LoggerInterface) {}
 
-    public async store(filepath: string, content: Buffer | Readable): Promise<void> {
-        this.log.debug(`Writing ${filepath}`);
-        return await this.storage.store(filepath, content);
+    public async store(filename: string, file: Buffer | Readable): Promise<SystemError[]> {
+        let errors: SystemError[];
+
+        try {
+            // Saved in s3 to eventually be processed by ETL
+            await this.storage.store(filename, file);
+        } catch (error) {
+            errors = Object.keys(error).map(
+                (key) =>
+                    new SystemError(
+                        error[key].Code,
+                        `Error: ${error[key].name}, Bucket: ${error[key].BucketName}, File: ${filename}`,
+                        error[key]
+                    )
+            );
+        }
+
+        return errors;
     }
 
     public async deleteFile(filepath: string): Promise<void> {
