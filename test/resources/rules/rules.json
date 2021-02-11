@@ -1,0 +1,37 @@
+[
+    {
+        "conditions": {
+            "all": [
+                {
+                    "fact": "study",
+                    "path": "$.donors.length",
+                    "operator": "greaterThan",
+                    "value": "0"
+                }
+            ]
+        },
+        "event": {
+            "type": "donors-not-found"
+        },
+        "name": "validate-has-donors"
+    },
+    {
+        "conditions": {
+            "all": [
+                {
+                    "fact": "study",
+                    "path": "$.donors[*].dob",
+                    "operator": "dateIsNotAfter",
+                    "value": {
+                        "fact": "study",
+                        "path": "$.donors[*].date_of_recruitement"
+                    }
+                }
+            ]
+        },
+        "event": {
+            "type": "donors-born-after-recruitment-date"
+        },
+        "name": "validate-donors-born-before-recruitment-date"
+    }
+]

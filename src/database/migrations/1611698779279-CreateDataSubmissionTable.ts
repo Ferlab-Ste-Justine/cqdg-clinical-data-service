@@ -21,6 +21,13 @@ export class CreateDataSubmissionTable1611698779279 implements MigrationInterfac
                     isNullable: false,
                 },
                 {
+                    name: 'dictionary_version',
+                    type: 'varchar',
+                    length: '255',
+                    isPrimary: false,
+                    isNullable: false,
+                },
+                {
                     name: 'status',
                     type: 'varchar',
                     length: '255',

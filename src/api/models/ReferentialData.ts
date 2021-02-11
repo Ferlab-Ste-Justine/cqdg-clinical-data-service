@@ -7,11 +7,25 @@ export enum Status {
 }
 
 export enum SampleRegistrationFieldsEnum {
-    study_id = 'study_id',
-    submitter_donor_id = 'submitter_donor_id',
-    submitter_biospecimen_id = 'submitter_biospecimen_id',
-    submitter_sample_id = 'submitter_sample_id',
-    sample_type = 'sample_type',
+    study_id = 'studyId',
+    submitter_donor_id = 'submitterDonorId',
+    submitter_biospecimen_id = 'submitterBiospecimenId',
+    submitter_sample_id = 'submitterSampleId',
+    sample_type = 'sampleType',
+}
+
+export enum CQDGDictionaryEntities {
+    BIOSPECIMEN = 'biospecimen',
+    DIAGNOSIS = 'diagnosis',
+    DONOR = 'donor',
+    EXPOSURE = 'exposure',
+    FAMILY_HISTORY = 'family_history',
+    FAMILY_RELATIONSHIP = 'family_relationship',
+    FOLLOW_UP = 'follow_up',
+    PHENOTYPE = 'phenotype',
+    SAMPLE_REGISTRATION = 'sample_registration',
+    STUDY = 'study',
+    TREATMENT = 'treatment',
 }
 
 export interface IKeycloakUser {

@@ -43,8 +43,22 @@ export class StorageService {
         return await this.storage.listFiles(directoryPath);
     }
 
-    public async read(filepath: string): Promise<Buffer | Readable> {
+    public async read(filepath: string): Promise<Readable | ReadableStream | Blob> {
         this.log.debug(`Retrieving ${filepath}`);
         return await this.storage.read(filepath);
+    }
+
+    public async readAsString(filepath: string, enc: BufferEncoding = 'utf-8'): Promise<string> {
+        const chunks = [];
+        const stream = await this.read(filepath);
+        if (stream instanceof Readable) {
+            return new Promise((resolve, reject) => {
+                stream.on('data', (chunk) => chunks.push(chunk));
+                stream.on('error', reject);
+                stream.on('end', () => resolve(Buffer.concat(chunks).toString(enc)));
+            });
+        } else {
+            throw new Error('Unknown object stream type');
+        }
     }
 }

@@ -1,0 +1,16 @@
+{
+    "conditions": {
+        "all": [
+            {
+                "fact": "study",
+                "path": "$.name",
+                "operator": "equal",
+                "value": "Study1"
+            }
+        ]
+    },
+    "event": {
+        "type": "invalid-study-name"
+    },
+    "name": "validate-study-name"
+}

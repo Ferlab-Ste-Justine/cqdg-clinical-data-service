@@ -8,12 +8,12 @@ import { DataSubmission } from '../models/DataSubmission';
 import { events } from '../subscribers/events';
 import { entities as dictionaryEntities } from '@overturebio-stack/lectern-client';
 import { SingleFileValidationStatus } from '../controllers/responses/SingleFileValidationStatus';
-import { StringStream } from 'scramjet';
 import { BatchProcessingResult } from '@overturebio-stack/lectern-client/lib/schema-entities';
 import { RecordValidationError } from '../controllers/responses/RecordValidationError';
-import latinize from 'latinize';
 import { LecternService } from './LecternService';
 import { SampleRegistrationService } from './SampleRegistrationService';
+import { parse } from 'papaparse';
+import { selectSchema } from '../utils';
 
 @Service()
 export class DataSubmissionService {
@@ -104,39 +104,30 @@ export class DataSubmissionService {
         singleFileValidationStatus.filename = file.originalname;
         singleFileValidationStatus.validationErrors = [];
 
-        const schemaForCurrentFile = await this.selectSchema(file.originalname);
+        const schemaForCurrentFile = await selectSchema(file.originalname, schemas);
         singleFileValidationStatus.schemaName = schemaForCurrentFile;
 
-        const entries: any[] = [];
-        await StringStream.from(file.buffer.toString('utf-8'), { maxParallel: 2 })
-            .CSVParse({
-                delimiter: '\t',
-                header: true,
-                skipEmptyLines: true,
-                worker: true,
-            })
-            .batch(100)
-            .each(async (results: any[]) => {
-                entries.push(...results);
-            })
-            .run();
+        const entries: any[] = parse(file.buffer.toString('utf-8'), {
+            delimiter: '\t',
+            header: true,
+            skipEmptyLines: true,
+        }).data;
 
-        const batch: Promise<BatchProcessingResult> = this.lecternService.validateRecords(
+        const lecternValidation: Promise<BatchProcessingResult> = this.lecternService.validateRecords(
             schemaForCurrentFile,
             entries,
             schemas
         );
-
-        let unregisteredData: Promise<RecordValidationError[]> = Promise.resolve([]);
+        let unregisteredDataValidation: Promise<RecordValidationError[]> = Promise.resolve([]);
 
         if (dataSubmissionId) {
-            unregisteredData = this.sampleRegistrationService.validateAgainstRegisteredSamples(
+            unregisteredDataValidation = this.sampleRegistrationService.validateAgainstRegisteredSamples(
                 entries,
                 dataSubmissionId
             );
         }
 
-        await Promise.all([unregisteredData, batch]).then((values) => {
+        await Promise.all([unregisteredDataValidation, lecternValidation]).then((values) => {
             // Sample registration lookup results
             if (values[0]) {
                 singleFileValidationStatus.validationErrors.push(...values[0]);
@@ -153,18 +144,5 @@ export class DataSubmissionService {
         });
 
         return singleFileValidationStatus;
-    }
-
-    private async selectSchema(filename: string): Promise<string> {
-        const filenameWithoutExtension = filename.substring(0, filename.indexOf('.'));
-        const latinizedFilename = latinize(filenameWithoutExtension);
-
-        let noSpecialChars = latinizedFilename.replace(/[^a-zA-Z_]/g, '');
-
-        while (noSpecialChars.endsWith('_')) {
-            noSpecialChars = noSpecialChars.substring(0, noSpecialChars.length - 1);
-        }
-
-        return noSpecialChars.toLowerCase().trim();
     }
 }

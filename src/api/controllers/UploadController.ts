@@ -27,8 +27,8 @@ import { SampleRegistrationService } from '../services/SampleRegistrationService
 import { StorageService } from '../services/StorageService';
 import { SystemError } from '../errors/SystemError';
 import { SampleRegistration } from '../models/SampleRegistration';
-import { entities as dictionaryEntities } from '@overturebio-stack/lectern-client';
 import { LecternService } from '../services/LecternService';
+import { RulesService } from '../services/RulesService';
 
 @Authorized()
 @JsonController('/submission')
@@ -54,6 +54,7 @@ export class UploadController {
         private dataSubmissionService: DataSubmissionService,
         private sampleRegistrationService: SampleRegistrationService,
         private storageService: StorageService,
+        private rulesService: RulesService,
         @Logger(__filename) private log: LoggerInterface
     ) {}
 
@@ -64,11 +65,17 @@ export class UploadController {
      * @param user
      */
     @Post('/:code')
-    public async create(@Param('code') code: string, @CurrentUser() user: User): Promise<number> {
+    public async create(@Param('code') code: string, @Req() request: any, @CurrentUser() user: User): Promise<number> {
         const dataSubmission: DataSubmission = new DataSubmission();
         dataSubmission.code = code;
         dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = user.id;
+
+        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
+        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
+
+        const schemas = await this.lecternService.fetchLatestDictionary(lang);
+        dataSubmission.dictionaryVersion = schemas.version;
 
         const savedDataSubmission: DataSubmission = await this.dataSubmissionService.create(dataSubmission);
         return savedDataSubmission.id;
@@ -132,14 +139,20 @@ export class UploadController {
         @CurrentUser() user: User,
         @Param('dataSubmissionId') dataSubmissionId: number
     ): Promise<ValidationReport> {
-        if (!(await this.isAllowed(user, dataSubmissionId))) {
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
+
+        if (!(await this.isAllowed(user, dataSubmission))) {
             throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
         }
 
         const report = new ValidationReport();
         report.files = [];
 
-        const schemas = await this.getSchemas(request);
+        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
+        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
+        const dictionaryName = `${env.lectern.dictionaryName} ${lang}`.trim();
+        const schemas = await this.lecternService.fetchDictionary(dictionaryName, dataSubmission.dictionaryVersion);
+
         const singleFileValidationStatus: SingleFileValidationStatus = await this.dataSubmissionService.validateFile(
             file,
             schemas,
@@ -152,8 +165,6 @@ export class UploadController {
         if (singleFileValidationStatus?.validationErrors?.length > 0) {
             response.status(400);
         } else {
-            const dataSubmission: DataSubmission = new DataSubmission();
-            dataSubmission.id = dataSubmissionId;
             dataSubmission.lastUpdatedBy = user.id;
             dataSubmission.registeredSamples = singleFileValidationStatus.processedRecords?.map(
                 (row) => new SampleRegistration(row)
@@ -220,7 +231,10 @@ export class UploadController {
         }
 
         const report = new ValidationReport();
-        const schemas = await this.getSchemas(request);
+        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
+        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
+
+        const schemas = await this.lecternService.fetchLatestDictionary(lang);
         const dataSubmissionCount: number = await this.sampleRegistrationService.countByDataSubmission(
             dataSubmissionId
         );
@@ -236,15 +250,11 @@ export class UploadController {
 
         for (const f of files) {
             this.log.debug(`Validating ${f.originalname}`);
-
             const singleFileValidationStatus: SingleFileValidationStatus = await this.dataSubmissionService.validateFile(
                 f,
                 schemas,
                 dataSubmissionId
             );
-
-            // FOR TESTING PURPOSES
-            // singleFileValidationStatus.validationErrors = [];
 
             report.files.push(singleFileValidationStatus);
 
@@ -276,28 +286,25 @@ export class UploadController {
     @Post('/:dataSubmissionId/clinical-data/validate')
     public async applyValidationRules(
         @Param('dataSubmissionId') dataSubmissionId: number,
-        @CurrentUser() user: User
+        @CurrentUser() user: User,
+        @Req() request: any
     ): Promise<ValidationReport> {
         const report = new ValidationReport();
+
+        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
+        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
+
+        const schemas = await this.lecternService.fetchLatestDictionary(lang);
+
+        this.rulesService.fireAllRules('5.11', user.id, dataSubmissionId, schemas);
 
         return report;
     }
 
-    private async getSchemas(request: any): Promise<dictionaryEntities.SchemasDictionary> {
-        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
-        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
-
-        const name = `${env.lectern.dictionaryName} ${lang}`.trim();
-        const schemas = await this.lecternService.fetchLatestDictionary(name);
-
-        return schemas;
-    }
-
-    private async isAllowed(user: User, dataSubmissionId: number): Promise<boolean> {
-        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
-
-        if (!dataSubmission) {
-            throw new NotFoundError(`Data submission with id ${dataSubmissionId} does not exist.`);
+    private async isAllowed(user: User, dataSubmission: number | DataSubmission): Promise<boolean>;
+    private async isAllowed(user: User, dataSubmission: any): Promise<boolean> {
+        if (!(dataSubmission instanceof DataSubmission)) {
+            dataSubmission = await this.dataSubmissionService.findOne(dataSubmission);
         }
 
         // SUGGESTION:

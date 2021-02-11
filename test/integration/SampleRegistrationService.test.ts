@@ -37,6 +37,7 @@ describe('SampleRegistrationService', () => {
 
         const dataSubmission = new DataSubmission();
         dataSubmission.code = 'TEST';
+        dataSubmission.dictionaryVersion = '5.12';
         dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = uuid.v1();
 

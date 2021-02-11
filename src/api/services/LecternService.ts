@@ -1,10 +1,15 @@
-import { entities as dictionaryEntities, functions as dictionaryService } from '@overturebio-stack/lectern-client';
+import {
+    entities as dictionaryEntities,
+    functions as dictionaryService,
+    parallel,
+} from '@overturebio-stack/lectern-client';
 import { Service } from 'typedi';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import axios, { AxiosResponse } from 'axios';
 import { env } from '../../env';
 import { Cache, CacheContainer } from 'node-ts-cache';
 import { MemoryStorage } from 'node-ts-cache-storage-memory';
+import { BatchProcessingResult, SchemaProcessingResult } from '@overturebio-stack/lectern-client/lib/schema-entities';
 
 const dictionaryCache = new CacheContainer(new MemoryStorage());
 
@@ -13,7 +18,8 @@ export class LecternService {
     constructor(@Logger(__filename) private log: LoggerInterface) {}
 
     // Do not cache the return from this method
-    public async fetchLatestDictionary(name: string): Promise<dictionaryEntities.SchemasDictionary> {
+    public async fetchLatestDictionary(language: string): Promise<dictionaryEntities.SchemasDictionary> {
+        const name = `${env.lectern.dictionaryName} ${language}`.trim();
         const token: string = this.getLecternAuthToken();
 
         const versions: AxiosResponse = await axios.get(`${env.lectern.serverUrl}/dictionaries`, {
@@ -69,15 +75,43 @@ export class LecternService {
     public async validateRecords(
         schemaName: string,
         records: ReadonlyArray<dictionaryEntities.DataRecord>,
-        schemasDictionary?: dictionaryEntities.SchemasDictionary
+        schemasDictionary?: dictionaryEntities.SchemasDictionary,
+        parallelize: boolean = true
     ): Promise<dictionaryEntities.BatchProcessingResult> {
         if (!schemasDictionary) {
             throw new Error('No schemas provided.');
         }
 
         try {
-            const res = await dictionaryService.processRecords(schemasDictionary, schemaName, records);
-            return res;
+            if (parallelize) {
+                const batchProcessingResult: BatchProcessingResult = {
+                    validationErrors: [],
+                    processedRecords: [],
+                };
+
+                await Promise.all(
+                    records.map(async (record, index) => {
+                        const schemaProcessingResult: SchemaProcessingResult = await parallel.processRecord(
+                            schemasDictionary,
+                            schemaName,
+                            record,
+                            index
+                        );
+                        if (schemaProcessingResult.validationErrors) {
+                            batchProcessingResult.validationErrors.push(...schemaProcessingResult.validationErrors);
+                        }
+                        if (schemaProcessingResult.processedRecord) {
+                            batchProcessingResult.processedRecords.push(schemaProcessingResult.processedRecord);
+                        }
+
+                        return undefined;
+                    })
+                );
+
+                return batchProcessingResult;
+            } else {
+                return await dictionaryService.processRecords(schemasDictionary, schemaName, records);
+            }
         } catch (err) {
             this.log.error(err);
             throw err;

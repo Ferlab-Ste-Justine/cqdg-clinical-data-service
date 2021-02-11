@@ -61,27 +61,45 @@ export class SampleRegistrationService {
         dataSubmissionId: number
     ): Promise<RecordValidationError[]> {
         const errors: RecordValidationError[] = [];
+        const entryKeys = entries ? Object.keys(entries[0]) : undefined;
+        const sampleRegistrationKeys = Object.keys(SampleRegistrationFieldsEnum);
 
-        // Search entries for values corresponding to the columns the SampleRegistration
-        for (const key of Object.keys(SampleRegistrationFieldsEnum)) {
-            // Retrieve the list of values that are not in the lookup table.
-            const result = await this.sampleRegistrationRepository.lookup(
-                dataSubmissionId,
-                key,
-                entries.map((entry) => entry[key]).filter((val) => val !== undefined)
-            );
-
-            if (result) {
-                const error: RecordValidationError = new RecordValidationError({});
-                error.errorType = SchemaValidationErrorTypes.INVALID_FIELD_VALUE_TYPE;
-                error.fieldName = key;
-                error.message = `The following ${key} : (${result.map(
-                    (entry) => entry[key]
-                )}) are not part of the registered samples for this submission`;
-
-                errors.push(error);
-            }
+        if (!entryKeys) {
+            return errors;
         }
+
+        const intersection = sampleRegistrationKeys.filter((element) => entryKeys.includes(element));
+
+        await Promise.all(
+            entries.map(async (entry, i) => {
+                const where = [];
+                const andCondition: { [key: string]: any } = { dataSubmissionId };
+
+                intersection.forEach((key) => {
+                    andCondition[SampleRegistrationFieldsEnum[key]] = entries[i][key];
+                });
+
+                where.push(andCondition);
+
+                const result = await this.sampleRegistrationRepository.find({
+                    where,
+                });
+
+                if (!result || result.length === 0) {
+                    const error: RecordValidationError = new RecordValidationError({});
+                    error.errorType = SchemaValidationErrorTypes.INVALID_FIELD_VALUE_TYPE;
+                    error.fieldName = `[${intersection.join(', ')}]`;
+                    error.message = `No sample registered for : [${intersection
+                        .map((key) => `${key}: ${entries[i][key]}`)
+                        .join(', ')}]`;
+                    error.index = i + 1;
+
+                    errors.push(error);
+                }
+
+                return undefined;
+            })
+        );
 
         return errors;
     }

@@ -17,6 +17,7 @@ describe('DataSubmissionService', () => {
 
     test('Find should return a list of data submissions', async (done) => {
         dataSubmission.status = Status.INITIATED;
+        dataSubmission.dictionaryVersion = '5.12';
         dataSubmission.createdBy = uuid.v1();
         dataSubmission.creationDate = new Date();
         dataSubmissionRepo.list = [dataSubmission];
@@ -34,6 +35,7 @@ describe('DataSubmissionService', () => {
 
     test('Create should dispatch subscribers', async (done) => {
         dataSubmission.status = Status.INITIATED;
+        dataSubmission.dictionaryVersion = '5.12';
         dataSubmission.createdBy = uuid.v1();
         dataSubmission.creationDate = new Date();
         dataSubmissionRepo.list = [dataSubmission];
@@ -46,35 +48,6 @@ describe('DataSubmissionService', () => {
         );
         const newDataSubmission = await dataSubmissionService.create(dataSubmission);
         expect(ed.dispatchMock).toBeCalledWith([events.dataSubmission.created, newDataSubmission]);
-        done();
-    });
-
-    test('Select proper schema based on file name', async (done) => {
-        const dataSubmissionService = new DataSubmissionService(
-            lecternService,
-            sampleRegistrationService,
-            dataSubmissionRepo as any,
-            ed as any,
-            log
-        );
-        expect(await dataSubmissionService['selectSchema']('sample_registration.csv')).toEqual('sample_registration');
-
-        // test for accents
-        expect(await dataSubmissionService['selectSchema']('SámPlÉ_RegíSTration.csv')).toEqual('sample_registration');
-
-        // allow to send multiple files for a same entity
-        expect(await dataSubmissionService['selectSchema']('sample_registration_1.csv')).toEqual('sample_registration');
-        expect(await dataSubmissionService['selectSchema']('sample_registration2.csv')).toEqual('sample_registration');
-        expect(await dataSubmissionService['selectSchema']('sample_registration.2.csv')).toEqual('sample_registration');
-
-        // test having version in the filename
-        expect(await dataSubmissionService['selectSchema']('sample_registration_5.11.tsv')).toEqual(
-            'sample_registration'
-        );
-        expect(await dataSubmissionService['selectSchema']('sample_registration_1_5.11.tsv')).toEqual(
-            'sample_registration'
-        );
-
         done();
     });
 });

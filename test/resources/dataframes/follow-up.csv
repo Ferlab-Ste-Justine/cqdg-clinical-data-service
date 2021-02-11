@@ -1,0 +1,2 @@
+submitter_follow-up_id	submitter_donor_id	study_id	submitter_diagnosis_id	days_to_follow_up	disease_status_at_followup	relapse_interval	treatment_response	is_cancer
+FU00002	PT00002	ST0001	DI00002	68	No evidence of disease		Disease Progression	Yes

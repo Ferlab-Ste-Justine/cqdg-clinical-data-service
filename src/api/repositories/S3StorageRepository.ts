@@ -4,6 +4,8 @@ import {
     CreateBucketCommand,
     DeleteObjectsCommand,
     DeleteObjectsCommandOutput,
+    GetObjectCommand,
+    GetObjectCommandOutput,
     ListObjectsV2Command,
     ListObjectsV2CommandOutput,
     PutObjectCommand,
@@ -82,9 +84,15 @@ export class S3StorageRepository {
         return files;
     }
 
-    public async read(filepath: string): Promise<Readable | Buffer> {
-        throw new Error('Not implemented.');
-        return Promise.resolve(undefined);
+    public async read(filename: string): Promise<Readable | ReadableStream | Blob> {
+        const request = {
+            Bucket: env.s3.bucketName,
+            Key: filename,
+        };
+
+        const result: GetObjectCommandOutput = await this.s3.send(new GetObjectCommand(request));
+
+        return result.Body;
     }
 
     public async store(filename: string, file: Buffer | Readable): Promise<void> {

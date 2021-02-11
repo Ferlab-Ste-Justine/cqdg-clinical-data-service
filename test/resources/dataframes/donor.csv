@@ -1,0 +1,3 @@
+study_id	submitter_donor_id	submitter_family_id	dob	age TODAY	date_of_recruitement	age at recruit	age_at_diagnosis	gender	ethnicity	vital_status	cause_of_death	age_of_death	height	body_weight	bmi	physical_measures_available	laboratory_measures_available	lifestyle_available	medication_available	environment_exposure_available	family_history_available	genealogy_available	is_a_proband	is_affected	seq	snv	cnv	sv	exp	meth
+ST0001	PT00001	FA0001	6/9/1946	74	11/22/2009	63	58	Male	French Canadian 	alive			168	85	30.12	YES	NO	YES	YES	NO	YES	NO	Not applicable	Not applicable	1	1				
+ST0001	PT00002		3/9/1952	68	1/9/2009	56	51	Female	French Canadian 	alive			168	87	30.82	YES	NO	YES	YES	NO	NO	YES	Not applicable	Not applicable	1	1				

@@ -99,4 +99,7 @@ export const env = {
         accessKey: getOsEnv('S3_ACCESS_KEY'),
         secretKey: getOsEnv('S3_SECRET_KEY'),
     },
+    rules: {
+        location: getOsEnvOptional('RULES_LOCATION', 'rules'),
+    },
 };

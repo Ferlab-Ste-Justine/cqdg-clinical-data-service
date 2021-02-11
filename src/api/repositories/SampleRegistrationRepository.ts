@@ -23,6 +23,11 @@ export class SampleRegistrationRepository extends Repository<SampleRegistration>
         return result.identifiers;
     }
 
+    /*
+     * Returns the values from the input list that could not be found in the database for a given field.
+     * eg.: field = study_id,  values = ['ST0001', 'ST0002', 'ST0010'],  Registered studies (db) = ['ST0001', 'ST0002']
+     *      The lookup would then return 'ST0010' because it was not found in the sample_registration table.
+     * */
     public async lookup(dataSubmissionId: number, field: string, values: string[]): Promise<any> {
         if (!values || values.length <= 0) {
             return undefined;

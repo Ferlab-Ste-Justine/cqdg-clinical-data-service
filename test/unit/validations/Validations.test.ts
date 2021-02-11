@@ -10,6 +10,7 @@ describe('Validations', () => {
         dataSubmission.id = 1;
         dataSubmission.code = 'TEST';
         dataSubmission.status = Status.INITIATED;
+        dataSubmission.dictionaryVersion = '5.12';
         dataSubmission.createdBy = uuid.v1();
         dataSubmission.creationDate = new Date();
 
