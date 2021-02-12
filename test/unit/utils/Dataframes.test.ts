@@ -56,4 +56,32 @@ describe('Select, join, group, aggregate', () => {
 
         done();
     });
+
+    test('Find orphans', async (done) => {
+        // Load CSVs
+        const diagnosisCSV = fs.readFileSync(path.resolve(__dirname, '../../resources/dataframes/diagnosis.csv'));
+        const treatmentCSV = fs.readFileSync(path.resolve(__dirname, '../../resources/dataframes/treatment.csv'));
+
+        const diagnoses = dataForge.fromCSV(diagnosisCSV.toString('utf-8'));
+        const treatments = dataForge.fromCSV(treatmentCSV.toString('utf-8'));
+
+        const joinKey: string = 'submitter_diagnosis_id';
+
+        const orphansDF = diagnoses
+            .joinOuterRight(
+                treatments,
+                (left) => left[joinKey],
+                (right) => right[joinKey],
+                (left, right) => {
+                    return left ? {} : right;
+                }
+            )
+            .where((column) => {
+                return Object.keys(column).length > 0;
+            });
+
+        expect(orphansDF.toArray().length).toBe(1);
+
+        done();
+    });
 });

@@ -28,7 +28,7 @@ import { StorageService } from '../services/StorageService';
 import { SystemError } from '../errors/SystemError';
 import { SampleRegistration } from '../models/SampleRegistration';
 import { LecternService } from '../services/LecternService';
-import { RulesService } from '../services/RulesService';
+import { ValidationService } from '../services/ValidationService';
 
 @Authorized()
 @JsonController('/submission')
@@ -54,7 +54,7 @@ export class UploadController {
         private dataSubmissionService: DataSubmissionService,
         private sampleRegistrationService: SampleRegistrationService,
         private storageService: StorageService,
-        private rulesService: RulesService,
+        private validationService: ValidationService,
         @Logger(__filename) private log: LoggerInterface
     ) {}
 
@@ -71,10 +71,7 @@ export class UploadController {
         dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = user.id;
 
-        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
-        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
-
-        const schemas = await this.lecternService.fetchLatestDictionary(lang);
+        const schemas = await this.fetchDictionary(request);
         dataSubmission.dictionaryVersion = schemas.version;
 
         const savedDataSubmission: DataSubmission = await this.dataSubmissionService.create(dataSubmission);
@@ -148,12 +145,9 @@ export class UploadController {
         const report = new ValidationReport();
         report.files = [];
 
-        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
-        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
-        const dictionaryName = `${env.lectern.dictionaryName} ${lang}`.trim();
-        const schemas = await this.lecternService.fetchDictionary(dictionaryName, dataSubmission.dictionaryVersion);
+        const schemas = await this.fetchDictionary(request, dataSubmission.dictionaryVersion);
 
-        const singleFileValidationStatus: SingleFileValidationStatus = await this.dataSubmissionService.validateFile(
+        const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
             file,
             schemas,
             undefined
@@ -226,15 +220,15 @@ export class UploadController {
         @Res() response: any,
         @CurrentUser() user?: User
     ): Promise<ValidationReport> {
-        if (!(await this.isAllowed(user, dataSubmissionId))) {
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
+
+        if (!(await this.isAllowed(user, dataSubmission))) {
             throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
         }
 
         const report = new ValidationReport();
-        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
-        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
 
-        const schemas = await this.lecternService.fetchLatestDictionary(lang);
+        const schemas = await this.fetchDictionary(request, dataSubmission.dictionaryVersion);
         const dataSubmissionCount: number = await this.sampleRegistrationService.countByDataSubmission(
             dataSubmissionId
         );
@@ -250,7 +244,7 @@ export class UploadController {
 
         for (const f of files) {
             this.log.debug(`Validating ${f.originalname}`);
-            const singleFileValidationStatus: SingleFileValidationStatus = await this.dataSubmissionService.validateFile(
+            const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
                 f,
                 schemas,
                 dataSubmissionId
@@ -284,21 +278,34 @@ export class UploadController {
      * Step 4 - Cross validate the data
      */
     @Post('/:dataSubmissionId/clinical-data/validate')
-    public async applyValidationRules(
+    public async crossValidateAllData(
         @Param('dataSubmissionId') dataSubmissionId: number,
         @CurrentUser() user: User,
-        @Req() request: any
+        @Req() request: any,
+        @Res() response: any
     ): Promise<ValidationReport> {
-        const report = new ValidationReport();
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
 
-        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
-        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
+        if (!(await this.isAllowed(user, dataSubmission))) {
+            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
+        }
 
-        const schemas = await this.lecternService.fetchLatestDictionary(lang);
+        const schemas = await this.fetchDictionary(request, dataSubmission.dictionaryVersion);
 
-        this.rulesService.fireAllRules('5.11', user.id, dataSubmissionId, schemas);
+        const validationReport = await this.validationService.validateAll(user.id, dataSubmissionId, schemas);
 
-        return report;
+        let hasError = false;
+        validationReport?.files.forEach((file) => {
+            if (file.validationErrors?.length > 0) {
+                hasError = true;
+            }
+        });
+
+        if (hasError || validationReport.globalValidationErrors?.length > 0 || validationReport.errors?.length > 0) {
+            response.status(400);
+        }
+
+        return validationReport;
     }
 
     private async isAllowed(user: User, dataSubmission: number | DataSubmission): Promise<boolean>;
@@ -312,5 +319,15 @@ export class UploadController {
         // roles & organization of the current user with the ones of the user who initially created the submission
 
         return user.id === dataSubmission.createdBy;
+    }
+
+    private async fetchDictionary(request: any, dictionaryVersion: string = undefined): Promise<any> {
+        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
+        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
+        const dictionaryName = `${env.lectern.dictionaryName} ${lang}`.trim();
+
+        return dictionaryVersion
+            ? await this.lecternService.fetchDictionary(dictionaryName, dictionaryVersion)
+            : await this.lecternService.fetchLatestDictionary(lang);
     }
 }

@@ -9,7 +9,6 @@ import { Status } from '../../../src/api/models/ReferentialData';
 
 describe('DataSubmissionService', () => {
     const log = new LogMock();
-    const lecternService = {} as any;
     const sampleRegistrationService = {} as any;
     const dataSubmissionRepo = new RepositoryMock();
     const ed = new EventDispatcherMock();
@@ -22,7 +21,6 @@ describe('DataSubmissionService', () => {
         dataSubmission.creationDate = new Date();
         dataSubmissionRepo.list = [dataSubmission];
         const dataSubmissionService = new DataSubmissionService(
-            lecternService,
             sampleRegistrationService,
             dataSubmissionRepo as any,
             ed as any,
@@ -40,7 +38,6 @@ describe('DataSubmissionService', () => {
         dataSubmission.creationDate = new Date();
         dataSubmissionRepo.list = [dataSubmission];
         const dataSubmissionService = new DataSubmissionService(
-            lecternService,
             sampleRegistrationService,
             dataSubmissionRepo as any,
             ed as any,

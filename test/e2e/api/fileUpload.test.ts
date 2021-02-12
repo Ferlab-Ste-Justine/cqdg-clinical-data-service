@@ -69,7 +69,7 @@ describe('/api', () => {
                 .attach('file', fs.createReadStream(path.resolve(__dirname, '../../resources/sample_registration.csv')))
                 .expect(200);
 
-            console.log(`>>>>>>>>>> Samples loaded for data submission ${dataSubmissionId}.`);
+            // console.log(`>>>>>>>>>> Samples loaded for data submission ${dataSubmissionId}.`);
         } catch (err) {
             fail(err);
         }

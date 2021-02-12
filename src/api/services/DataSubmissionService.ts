@@ -6,19 +6,11 @@ import { Logger, LoggerInterface } from '../../decorators/Logger';
 import { DataSubmissionRepository } from '../repositories/DataSubmissionRepository';
 import { DataSubmission } from '../models/DataSubmission';
 import { events } from '../subscribers/events';
-import { entities as dictionaryEntities } from '@overturebio-stack/lectern-client';
-import { SingleFileValidationStatus } from '../controllers/responses/SingleFileValidationStatus';
-import { BatchProcessingResult } from '@overturebio-stack/lectern-client/lib/schema-entities';
-import { RecordValidationError } from '../controllers/responses/RecordValidationError';
-import { LecternService } from './LecternService';
 import { SampleRegistrationService } from './SampleRegistrationService';
-import { parse } from 'papaparse';
-import { selectSchema } from '../utils';
 
 @Service()
 export class DataSubmissionService {
     constructor(
-        private lecternService: LecternService,
         private sampleRegistrationService: SampleRegistrationService,
         @OrmRepository() private dataSubmissionRepository: DataSubmissionRepository,
         @EventDispatcher() private eventDispatcher: EventDispatcherInterface,
@@ -93,56 +85,5 @@ export class DataSubmissionService {
 
         await this.dataSubmissionRepository.delete(id);
         return;
-    }
-
-    public async validateFile(
-        file: Express.Multer.File,
-        schemas: dictionaryEntities.SchemasDictionary,
-        dataSubmissionId: number
-    ): Promise<SingleFileValidationStatus> {
-        const singleFileValidationStatus: SingleFileValidationStatus = new SingleFileValidationStatus();
-        singleFileValidationStatus.filename = file.originalname;
-        singleFileValidationStatus.validationErrors = [];
-
-        const schemaForCurrentFile = await selectSchema(file.originalname, schemas);
-        singleFileValidationStatus.schemaName = schemaForCurrentFile;
-
-        const entries: any[] = parse(file.buffer.toString('utf-8'), {
-            delimiter: '\t',
-            header: true,
-            skipEmptyLines: true,
-        }).data;
-
-        const lecternValidation: Promise<BatchProcessingResult> = this.lecternService.validateRecords(
-            schemaForCurrentFile,
-            entries,
-            schemas
-        );
-        let unregisteredDataValidation: Promise<RecordValidationError[]> = Promise.resolve([]);
-
-        if (dataSubmissionId) {
-            unregisteredDataValidation = this.sampleRegistrationService.validateAgainstRegisteredSamples(
-                entries,
-                dataSubmissionId
-            );
-        }
-
-        await Promise.all([unregisteredDataValidation, lecternValidation]).then((values) => {
-            // Sample registration lookup results
-            if (values[0]) {
-                singleFileValidationStatus.validationErrors.push(...values[0]);
-            }
-
-            // Lectern validation results
-            singleFileValidationStatus.processedRecords = values[1]?.processedRecords || [];
-
-            if (values[1]?.validationErrors?.length > 0) {
-                singleFileValidationStatus.validationErrors.push(
-                    values[1].validationErrors.map((err) => new RecordValidationError(err))
-                );
-            }
-        });
-
-        return singleFileValidationStatus;
     }
 }
