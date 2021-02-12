@@ -255,6 +255,10 @@ export class ValidationService {
         this.log.info('Return a list of orphan children');
         const validationErrors: RecordValidationError[] = [];
 
+        if (!parent || !children) {
+            return validationErrors;
+        }
+
         const orphans = parent
             .joinOuterRight(
                 children,
