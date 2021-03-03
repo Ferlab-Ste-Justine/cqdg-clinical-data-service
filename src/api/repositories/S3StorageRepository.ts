@@ -54,7 +54,7 @@ export class S3StorageRepository {
         };
 
         const result: DeleteObjectsCommandOutput = await this.s3.send(new DeleteObjectsCommand(request));
-        if (result.Errors?.length > 0) {
+        if (result.Errors) {
             throw new Error(JSON.stringify(result.Errors, undefined, 2));
         }
     }
@@ -75,7 +75,7 @@ export class S3StorageRepository {
         let result: ListObjectsV2CommandOutput;
         do {
             result = await this.s3.send(new ListObjectsV2Command(request));
-            if (result?.Contents) {
+            if (result && result.Contents) {
                 files.push(...result.Contents.map((o) => o.Key));
             }
             request.ContinuationToken = result.NextContinuationToken;

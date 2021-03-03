@@ -60,6 +60,6 @@ export class DataSubmissionResolver {
 
     @FieldResolver()
     public async registeredSamples(@Root() dataSubmission: DataSubmissionModel): Promise<any> {
-        return dataSubmission?.registeredSamples.map((sample) => new SampleRegistration(sample));
+        return dataSubmission.registeredSamples.map((sample) => new SampleRegistration(sample));
     }
 }

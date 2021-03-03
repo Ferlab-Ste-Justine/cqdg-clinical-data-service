@@ -1,13 +1,11 @@
-FROM node:alpine
+FROM node:14.4.0-alpine
 
-# Create work directory
-WORKDIR /usr/src/app
+ADD . /code
+WORKDIR /code
 
-# Copy app source to work directory
-COPY . /usr/src/app
+RUN apk update && apk add python g++ make && rm -rf /var/cache/apk/*
+RUN npm install --silent
 
-# Install app dependencies
-RUN npm install
+EXPOSE 4000
 
-# Build and run the app
-CMD npm start serve
+CMD ["npm", "start", "serve"]

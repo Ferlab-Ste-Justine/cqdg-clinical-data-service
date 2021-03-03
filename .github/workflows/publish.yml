@@ -1,0 +1,22 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    name: Publish Image
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Push the image on the docker registry
+        uses: Ferlab-Ste-Justine/action-push-image@master
+        with:
+          username: ${{ secrets.FERLAB_DOCKER_HUB_USER }}
+          password: ${{ secrets.FERLAB_DOCKER_HUB_TOKEN }}
+          image: ferlabcrsj/cqdg-clinical-data-service
+          tag_source: sha
+          location: .
+          dockerfile: Dockerfile

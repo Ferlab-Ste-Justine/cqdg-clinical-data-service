@@ -36,7 +36,7 @@ export class DataSubmissionService {
     public async create(dataSubmission: DataSubmission): Promise<DataSubmission> {
         const newDataSubmission = await this.dataSubmissionRepository.save(dataSubmission);
 
-        if (dataSubmission.registeredSamples?.length > 0) {
+        if (dataSubmission.registeredSamples) {
             await this.sampleRegistrationService.bulkCreate(
                 dataSubmission.registeredSamples.map((sample) => {
                     sample.dataSubmissionId = newDataSubmission.id;
@@ -62,7 +62,7 @@ export class DataSubmissionService {
             dataSubmissionId: dataSubmission.id,
         });
 
-        if (dataSubmission.registeredSamples?.length > 0) {
+        if (dataSubmission.registeredSamples) {
             await this.sampleRegistrationService.bulkCreate(
                 dataSubmission.registeredSamples.map((sample) => {
                     sample.id = undefined;

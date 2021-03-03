@@ -156,13 +156,17 @@ export class UploadController {
 
         this.log.debug(JSON.stringify(report));
 
-        if (singleFileValidationStatus?.validationErrors?.length > 0) {
+        if (
+            singleFileValidationStatus &&
+            singleFileValidationStatus.validationErrors &&
+            singleFileValidationStatus.validationErrors.length > 0
+        ) {
             response.status(400);
         } else {
             dataSubmission.lastUpdatedBy = user.id;
-            dataSubmission.registeredSamples = singleFileValidationStatus.processedRecords?.map(
-                (row) => new SampleRegistration(row)
-            );
+            dataSubmission.registeredSamples = singleFileValidationStatus.processedRecords
+                ? singleFileValidationStatus.processedRecords.map((row) => new SampleRegistration(row))
+                : undefined;
 
             const savedDataSubmission: DataSubmission = await this.dataSubmissionService.update(dataSubmission);
 
@@ -171,7 +175,7 @@ export class UploadController {
                 file.buffer
             );
 
-            if (errors?.length > 0) {
+            if (errors && errors.length > 0) {
                 response.status(500);
             }
 
@@ -295,13 +299,15 @@ export class UploadController {
         const validationReport = await this.validationService.validateAll(user.id, dataSubmissionId, schemas);
 
         let hasError = false;
-        validationReport?.files.forEach((file) => {
-            if (file.validationErrors?.length > 0) {
-                hasError = true;
-            }
-        });
+        if (validationReport && validationReport.files) {
+            validationReport.files.forEach((file) => {
+                if (file.validationErrors && file.validationErrors.length > 0) {
+                    hasError = true;
+                }
+            });
+        }
 
-        if (hasError || validationReport.globalValidationErrors?.length > 0 || validationReport.errors?.length > 0) {
+        if (hasError || validationReport.globalValidationErrors.length > 0 || validationReport.errors.length > 0) {
             response.status(400);
         }
 

@@ -1,6 +1,8 @@
 .vscode
+.github
 node_modules
 test
+*.iml
 .editorconfig
 .env.example
 .gitignore
@@ -9,3 +11,5 @@ appveyor.yml
 icon.png
 LICENSE
 README.md
+dist
+docker

@@ -42,6 +42,7 @@ export class ValidationService {
         const report = new ValidationReport();
         report.globalValidationErrors = [];
         report.files = [];
+        report.errors = [];
 
         // Launch custom rules validation
         const rules = await this.fetchRules(schemas.version);
@@ -142,7 +143,7 @@ export class ValidationService {
             ))
         );
 
-        if (rules && rules.length > 0) {
+        if (rules) {
             const biospecimenWithDeps = loadBiospecimens(
                 dataframes[CQDGDictionaryEntities.BIOSPECIMEN],
                 dataframes[CQDGDictionaryEntities.SAMPLE_REGISTRATION]
@@ -235,9 +236,14 @@ export class ValidationService {
         }
 
         // Lectern validation results
-        singleFileValidationStatus.processedRecords = lecternValidationResult?.processedRecords || [];
+        singleFileValidationStatus.processedRecords =
+            (lecternValidationResult && lecternValidationResult.processedRecords) || [];
 
-        if (lecternValidationResult?.validationErrors?.length > 0) {
+        if (
+            lecternValidationResult &&
+            lecternValidationResult.validationErrors &&
+            lecternValidationResult.validationErrors.length > 0
+        ) {
             singleFileValidationStatus.validationErrors.push(
                 lecternValidationResult.validationErrors.map((err) => new RecordValidationError(err))
             );
@@ -273,7 +279,7 @@ export class ValidationService {
             })
             .toArray();
 
-        if (orphans?.length > 0) {
+        if (orphans) {
             orphans.forEach((orphan) => {
                 const error = new RecordValidationError({});
                 error.fieldName = joinKey;
