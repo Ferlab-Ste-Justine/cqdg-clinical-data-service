@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class CreateDataSubmissionTable1611698779279 implements MigrationInterface {
+export class CreateStudyTable1614978426869 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const table = new Table({
-            name: 'data_submission',
+            name: 'study',
             columns: [
                 {
                     name: 'id',
@@ -14,23 +14,11 @@ export class CreateDataSubmissionTable1611698779279 implements MigrationInterfac
                     isNullable: false,
                 },
                 {
-                    name: 'study_id',
-                    type: 'integer',
-                    isPrimary: false,
-                    isNullable: false,
-                },
-                {
-                    name: 'dictionary_version',
+                    name: 'code',
                     type: 'varchar',
                     length: '255',
                     isPrimary: false,
                     isNullable: false,
-                },
-                {
-                    name: 'status_report',
-                    type: 'json',
-                    isPrimary: false,
-                    isNullable: true,
                 },
                 {
                     name: 'creation_date',
@@ -64,6 +52,6 @@ export class CreateDataSubmissionTable1611698779279 implements MigrationInterfac
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.dropTable('data_submission');
+        await queryRunner.dropTable('study');
     }
 }

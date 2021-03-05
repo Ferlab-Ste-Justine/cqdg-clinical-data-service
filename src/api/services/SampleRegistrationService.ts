@@ -41,9 +41,14 @@ export class SampleRegistrationService {
         return newSampleRegistration;
     }
 
-    public async bulkCreate(sampleRegistrations: SampleRegistration[]): Promise<any> {
-        const ids = await this.sampleRegistrationRepository.saveAll(sampleRegistrations);
-        return ids;
+    public async bulkCreate(sampleRegistrations: SampleRegistration[]): Promise<SampleRegistration[]> {
+        const newSampleRegistrations: SampleRegistration[] = [];
+
+        for (const sampleRegistration of sampleRegistrations) {
+            newSampleRegistrations.push(await this.create(sampleRegistration));
+        }
+
+        return newSampleRegistrations;
     }
 
     public update(id: number, sampleRegistration: SampleRegistration): Promise<SampleRegistration> {

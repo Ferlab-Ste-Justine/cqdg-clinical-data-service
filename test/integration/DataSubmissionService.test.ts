@@ -4,22 +4,27 @@ import { closeDatabase, createDatabaseConnection, migrateDatabase } from '../uti
 import { configureLogger } from '../../src/modules/logger';
 import { DataSubmission } from '../../src/api/models/DataSubmission';
 import { DataSubmissionService } from '../../src/api/services/DataSubmissionService';
-import { Status } from '../../src/api/models/ReferentialData';
 import * as uuid from 'uuid';
 import { ValidationReport } from '../../src/api/controllers/responses/ValidationReport';
 import { SingleFileValidationStatus } from '../../src/api/controllers/responses/SingleFileValidationStatus';
 import { RecordValidationError } from '../../src/api/controllers/responses/RecordValidationError';
 import { SampleRegistration } from '../../src/api/models/SampleRegistration';
+import { Study } from '../../src/api/models/Study';
+import { StudyService } from '../../src/api/services/StudyService';
 
 describe('DataSubmissionService', () => {
     // -------------------------------------------------------------------------
     // Setup up
     // -------------------------------------------------------------------------
+    const createdBy: string = uuid.v1();
 
     let connection: Connection;
+    let study: Study;
+
     beforeAll(async () => {
         configureLogger();
         connection = await createDatabaseConnection();
+        study = await createStudy();
     });
     beforeEach(() => migrateDatabase(connection));
 
@@ -28,6 +33,15 @@ describe('DataSubmissionService', () => {
     // -------------------------------------------------------------------------
 
     afterAll(() => closeDatabase(connection));
+
+    const createStudy = async (): Promise<Study> => {
+        const service = Container.get<StudyService>(StudyService);
+        const study: Study = new Study();
+        study.code = 'TEST';
+        study.createdBy = createdBy;
+
+        return await service.create(study);
+    };
 
     // -------------------------------------------------------------------------
     // Utility methods
@@ -81,16 +95,15 @@ describe('DataSubmissionService', () => {
 
     test('should create a new data submission in the database', async (done) => {
         const dataSubmission = new DataSubmission();
-        dataSubmission.code = 'TEST';
+        dataSubmission.studyId = study.id;
+        dataSubmission.study = study;
         dataSubmission.dictionaryVersion = '5.12';
-        dataSubmission.status = Status.INITIATED;
-        dataSubmission.createdBy = uuid.v1();
+        dataSubmission.createdBy = createdBy;
         dataSubmission.statusReport = getUploadReport();
 
         const service = Container.get<DataSubmissionService>(DataSubmissionService);
         const resultCreate = await service.create(dataSubmission);
 
-        expect(resultCreate.status).toBe(Status.INITIATED);
         expect(resultCreate.id).not.toBeUndefined();
         expect(resultCreate.creationDate).not.toBeUndefined();
 
@@ -106,7 +119,6 @@ describe('DataSubmissionService', () => {
 
         if (resultFind) {
             expect(resultFind.id).not.toBeUndefined();
-            expect(resultFind.status).toBe(Status.INITIATED);
             expect(resultFind.statusReport).not.toBeUndefined();
         } else {
             fail(`Could not find data submission with id ${resultCreate.id}`);
@@ -116,10 +128,10 @@ describe('DataSubmissionService', () => {
 
     test('should create a new data submission with samples in the database', async (done) => {
         const dataSubmission = new DataSubmission();
-        dataSubmission.code = 'TEST';
+        dataSubmission.studyId = study.id;
+        dataSubmission.study = study;
         dataSubmission.dictionaryVersion = '5.12';
-        dataSubmission.status = Status.INITIATED;
-        dataSubmission.createdBy = uuid.v1();
+        dataSubmission.createdBy = createdBy;
         dataSubmission.registeredSamples = [];
 
         const sample1: SampleRegistration = new SampleRegistration({

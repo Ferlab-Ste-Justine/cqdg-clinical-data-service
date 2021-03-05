@@ -1,11 +1,3 @@
-export enum Status {
-    INITIATED = 'INITIATED',
-    SAMPLES_REGISTERED = 'SAMPLES_REGISTERED',
-    CLINICAL_DATA_INITIATED = 'CLINICAL_DATA_INITIATED',
-    CLINICAL_DATA_VALIDATED = 'CLINICAL_DATA_VALIDATED',
-    COMPLETED = 'COMPLETED',
-}
-
 export enum SampleRegistrationFieldsEnum {
     study_id = 'studyId',
     submitter_donor_id = 'submitterDonorId',

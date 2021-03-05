@@ -21,6 +21,9 @@ import { SingleFileValidationStatus } from '../controllers/responses/SingleFileV
 import { parse } from 'papaparse';
 import { SampleRegistrationService } from './SampleRegistrationService';
 import { LecternService } from './LecternService';
+import { StudyService } from './StudyService';
+import { DataSubmission } from '../models/DataSubmission';
+import { Study } from '../models/Study';
 
 const rulesCache = new CacheContainer(new MemoryStorage());
 
@@ -28,6 +31,7 @@ const rulesCache = new CacheContainer(new MemoryStorage());
 export class ValidationService {
     constructor(
         private storageService: StorageService,
+        private studyService: StudyService,
         private rulesService: RulesService,
         private sampleRegistrationService: SampleRegistrationService,
         private lecternService: LecternService,
@@ -35,8 +39,7 @@ export class ValidationService {
     ) {}
 
     public async validateAll(
-        userId: string,
-        dataSubmissionId: number,
+        dataSubmission: DataSubmission,
         schemas: dictionaryEntities.SchemasDictionary
     ): Promise<ValidationReport> {
         const report = new ValidationReport();
@@ -44,11 +47,16 @@ export class ValidationService {
         report.files = [];
         report.errors = [];
 
+        const study: Study = await this.studyService.findOne(dataSubmission.studyId);
+
         // Launch custom rules validation
         const rules = await this.fetchRules(schemas.version);
 
         const dataframes: { [key: string]: DataFrame<number, any> } = {};
-        const files: string[] = await this.storageService.listFiles(`clinical-data/${userId}.tmp/${dataSubmissionId}`);
+
+        const files: string[] = await this.storageService.listFiles(
+            `clinical-data//${study.createdBy}/${study.id}-${study.code}/${dataSubmission.id}.tmp`
+        );
 
         // Re-run all Lectern validations
         // And while we are loop on the files, load them into dataframes for further validations.
@@ -65,7 +73,7 @@ export class ValidationService {
                 }).data;
 
                 const singleFileValidationStatus: SingleFileValidationStatus = await this.validateFileEntries(
-                    dataSubmissionId,
+                    dataSubmission.id,
                     schemaName,
                     filename,
                     entries,
@@ -165,9 +173,9 @@ export class ValidationService {
             const studies = loadStudies(dataframes[CQDGDictionaryEntities.STUDY], donorsWithDeps).toArray();
             const facts = [];
 
-            for (const study of studies) {
+            for (const st of studies) {
                 facts.push({
-                    study,
+                    st,
                 });
             }
 

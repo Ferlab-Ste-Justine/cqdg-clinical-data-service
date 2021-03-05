@@ -21,7 +21,7 @@ import { ValidationReport } from './responses/ValidationReport';
 import { SingleFileValidationStatus } from './responses/SingleFileValidationStatus';
 import { env } from '../../env';
 import { DataSubmission } from '../models/DataSubmission';
-import { Status, User } from '../models/ReferentialData';
+import { User } from '../models/ReferentialData';
 import { DataSubmissionService } from '../services/DataSubmissionService';
 import { SampleRegistrationService } from '../services/SampleRegistrationService';
 import { StorageService } from '../services/StorageService';
@@ -29,12 +29,15 @@ import { SystemError } from '../errors/SystemError';
 import { SampleRegistration } from '../models/SampleRegistration';
 import { LecternService } from '../services/LecternService';
 import { ValidationService } from '../services/ValidationService';
+import { StudyService } from '../services/StudyService';
+import { BaseController } from './BaseController';
+import { Study } from '../models/Study';
 
 @Authorized()
 @JsonController('/submission')
 @OpenAPI({})
 // @OpenAPI({ security: [{ cqdgAuth: [] }] })
-export class UploadController {
+export class UploadController extends BaseController {
     private static uploadOptions: UploadOptions = {
         required: true,
         options: {
@@ -50,55 +53,33 @@ export class UploadController {
     };
 
     constructor(
+        private studyService: StudyService,
         private lecternService: LecternService,
         private dataSubmissionService: DataSubmissionService,
         private sampleRegistrationService: SampleRegistrationService,
         private storageService: StorageService,
         private validationService: ValidationService,
         @Logger(__filename) private log: LoggerInterface
-    ) {}
-
-    /**
-     * Step 1 - Create a submission to initiate the process
-     *
-     * @param code
-     * @param user
-     */
-    @Post('/:code')
-    public async create(@Param('code') code: string, @Req() request: any, @CurrentUser() user: User): Promise<number> {
-        const dataSubmission: DataSubmission = new DataSubmission();
-        dataSubmission.code = code;
-        dataSubmission.status = Status.INITIATED;
-        dataSubmission.createdBy = user.id;
-
-        const schemas = await this.fetchDictionary(request);
-        dataSubmission.dictionaryVersion = schemas.version;
-
-        const savedDataSubmission: DataSubmission = await this.dataSubmissionService.create(dataSubmission);
-        return savedDataSubmission.id;
+    ) {
+        super();
     }
 
     @Delete('/:dataSubmissionId')
-    public async delete(@Param('dataSubmissionId') dataSubmissionId: number, @CurrentUser() user: User): Promise<void> {
+    public async delete(
+        @Param('dataSubmissionId') dataSubmissionId: number,
+        @CurrentUser() user: User
+    ): Promise<number> {
         if (!(await this.isAllowed(user, dataSubmissionId))) {
             throw new UnauthorizedError(`User ${user.id} not allowed to delete submission ${dataSubmissionId}`);
         }
 
         try {
             await this.dataSubmissionService.delete(dataSubmissionId);
-            try {
-                await this.storageService.deleteDirectory(`clinical-data/${user.id}.tmp/${dataSubmissionId}`);
-            } catch (err1) {
-                // No files found - ignore.
-            }
-            try {
-                await this.storageService.deleteDirectory(`clinical-data/${user.id}/${dataSubmissionId}`);
-            } catch (err2) {
-                // No files found - ignore.
-            }
         } catch (err3) {
             throw new NotFoundError(`No submission with id ${dataSubmissionId}.`);
         }
+
+        return dataSubmissionId;
     }
 
     /**
@@ -145,7 +126,7 @@ export class UploadController {
         const report = new ValidationReport();
         report.files = [];
 
-        const schemas = await this.fetchDictionary(request, dataSubmission.dictionaryVersion);
+        const schemas = await this.fetchDictionary(request, this.lecternService, dataSubmission.dictionaryVersion);
 
         const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
             file,
@@ -168,10 +149,11 @@ export class UploadController {
                 ? singleFileValidationStatus.processedRecords.map((row) => new SampleRegistration(row))
                 : undefined;
 
-            const savedDataSubmission: DataSubmission = await this.dataSubmissionService.update(dataSubmission);
+            const updatedDataSubmission: DataSubmission = await this.dataSubmissionService.update(dataSubmission);
+            const study: Study = await this.studyService.findOne(updatedDataSubmission.studyId);
 
             const errors: SystemError[] = await this.storageService.store(
-                `clinical-data/${user.id}.tmp/${savedDataSubmission.id}/${file.originalname}`,
+                `clinical-data/${study.createdBy}/${study.id}-${study.code}/${updatedDataSubmission.id}.tmp/${file.originalname}`,
                 file.buffer
             );
 
@@ -232,7 +214,7 @@ export class UploadController {
 
         const report = new ValidationReport();
 
-        const schemas = await this.fetchDictionary(request, dataSubmission.dictionaryVersion);
+        const schemas = await this.fetchDictionary(request, this.lecternService, dataSubmission.dictionaryVersion);
         const dataSubmissionCount: number = await this.sampleRegistrationService.countByDataSubmission(
             dataSubmissionId
         );
@@ -241,6 +223,7 @@ export class UploadController {
             throw new HttpError(400, `No samples are registered for data submission id ${dataSubmissionId}`);
         }
 
+        const study: Study = await this.studyService.findOne(dataSubmission.studyId);
         let hasErrors = false;
 
         report.files = [];
@@ -261,7 +244,10 @@ export class UploadController {
             if (singleFileValidationStatus.validationErrors.length === 0) {
                 // N.B.: There will always be a dataSubmissionId here; thus, it will always update, not create.
                 this.storageService
-                    .store(`clinical-data/${user.id}.tmp/${dataSubmissionId}/${f.originalname}`, f.buffer)
+                    .store(
+                        `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmissionId}.tmp/${f.originalname}`,
+                        f.buffer
+                    )
                     .then((errors) => {
                         if (errors && errors.length > 0) {
                             report.errors.push(...errors);
@@ -294,9 +280,9 @@ export class UploadController {
             throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
         }
 
-        const schemas = await this.fetchDictionary(request, dataSubmission.dictionaryVersion);
+        const schemas = await this.fetchDictionary(request, this.lecternService, dataSubmission.dictionaryVersion);
 
-        const validationReport = await this.validationService.validateAll(user.id, dataSubmissionId, schemas);
+        const validationReport = await this.validationService.validateAll(dataSubmission, schemas);
 
         let hasError = false;
         if (validationReport && validationReport.files) {
@@ -314,26 +300,10 @@ export class UploadController {
         return validationReport;
     }
 
-    private async isAllowed(user: User, dataSubmission: number | DataSubmission): Promise<boolean>;
-    private async isAllowed(user: User, dataSubmission: any): Promise<boolean> {
+    private async isAllowed(user: User, dataSubmission: number | DataSubmission): Promise<boolean> {
         if (!(dataSubmission instanceof DataSubmission)) {
             dataSubmission = await this.dataSubmissionService.findOne(dataSubmission);
         }
-
-        // SUGGESTION:
-        // Call Keycloak to retrieve user roles and organization of dataSubmission.createdBy user and compare the
-        // roles & organization of the current user with the ones of the user who initially created the submission
-
         return user.id === dataSubmission.createdBy;
-    }
-
-    private async fetchDictionary(request: any, dictionaryVersion: string = undefined): Promise<any> {
-        let lang = request.acceptsLanguages('fr', 'en').toUpperCase();
-        lang = env.lectern.dictionaryDefaultLanguage === lang ? '' : lang;
-        const dictionaryName = `${env.lectern.dictionaryName} ${lang}`.trim();
-
-        return dictionaryVersion
-            ? await this.lecternService.fetchDictionary(dictionaryName, dictionaryVersion)
-            : await this.lecternService.fetchLatestDictionary(lang);
     }
 }

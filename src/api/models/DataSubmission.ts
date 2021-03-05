@@ -1,11 +1,11 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Status } from './ReferentialData';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { IsNotEmpty, IsNumber, ValidateNested } from 'class-validator';
 import { AuditEntity } from './AuditEntity';
 import { SampleRegistration } from './SampleRegistration';
 import { ValidationReport } from '../controllers/responses/ValidationReport';
 import { DbAwareColumn } from '../../decorators/DBAwareColumn';
 import { Type } from 'class-transformer';
+import { Study } from './Study';
 
 @Entity({
     name: 'data_submission',
@@ -15,11 +15,15 @@ export class DataSubmission extends AuditEntity {
     @PrimaryGeneratedColumn('increment')
     public id: number;
 
-    @IsNotEmpty()
     @Column({
-        type: 'varchar',
+        name: 'study_id',
+        nullable: true,
     })
-    public code: string;
+    public studyId: number;
+
+    @ManyToOne((type) => Study, (study) => study.dataSubmissions, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'study_id' })
+    public study: Study;
 
     @IsNotEmpty()
     @Column({
@@ -27,12 +31,6 @@ export class DataSubmission extends AuditEntity {
         name: 'dictionary_version',
     })
     public dictionaryVersion: string;
-
-    @IsNotEmpty()
-    @Column({
-        type: 'varchar',
-    })
-    public status: Status;
 
     @ValidateNested({ each: true })
     @Type(() => ValidationReport)

@@ -25,10 +25,10 @@ export class AuditEntity {
         default: () => '0',
         transformer: {
             to: (value?: Date) => (!value ? value : value.getTime()),
-            from: (value?: number) => (!value ? value : new Date(value)),
+            from: (value?: number) => (!value ? value : new Date(+value)),
         },
     })
-    @Type(() => Date)
+    // @Type(() => Date)
     public creationDate: Date;
 
     @IsOptional()
@@ -38,7 +38,7 @@ export class AuditEntity {
         nullable: true,
         transformer: {
             to: (value?: Date) => (!value ? value : value.getTime()),
-            from: (value?: number) => (!value ? value : new Date(value)),
+            from: (value?: number) => (!value ? value : new Date(+value)),
         },
     })
     @Type(() => Date)

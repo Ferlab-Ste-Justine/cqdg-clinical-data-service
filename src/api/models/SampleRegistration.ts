@@ -16,7 +16,7 @@ export class SampleRegistration {
     })
     public dataSubmissionId: number;
 
-    @ManyToOne((type) => DataSubmission, (dataSubmission) => dataSubmission.registeredSamples)
+    @ManyToOne((type) => DataSubmission, (dataSubmission) => dataSubmission.registeredSamples, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'data_submission_id' })
     public dataSubmission: DataSubmission;
 

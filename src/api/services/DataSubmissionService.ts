@@ -7,12 +7,17 @@ import { DataSubmissionRepository } from '../repositories/DataSubmissionReposito
 import { DataSubmission } from '../models/DataSubmission';
 import { events } from '../subscribers/events';
 import { SampleRegistrationService } from './SampleRegistrationService';
+import { StudyRepository } from '../repositories/StudyRepository';
+import { Study } from '../models/Study';
+import { StorageService } from './StorageService';
 
 @Service()
 export class DataSubmissionService {
     constructor(
         private sampleRegistrationService: SampleRegistrationService,
+        private storageService: StorageService,
         @OrmRepository() private dataSubmissionRepository: DataSubmissionRepository,
+        @OrmRepository() private studyRepository: StudyRepository,
         @EventDispatcher() private eventDispatcher: EventDispatcherInterface,
         @Logger(__filename) private log: LoggerInterface
     ) {}
@@ -37,7 +42,7 @@ export class DataSubmissionService {
         const newDataSubmission = await this.dataSubmissionRepository.save(dataSubmission);
 
         if (dataSubmission.registeredSamples) {
-            await this.sampleRegistrationService.bulkCreate(
+            newDataSubmission.registeredSamples = await this.sampleRegistrationService.bulkCreate(
                 dataSubmission.registeredSamples.map((sample) => {
                     sample.dataSubmissionId = newDataSubmission.id;
                     return sample;
@@ -47,6 +52,17 @@ export class DataSubmissionService {
 
         this.eventDispatcher.dispatch(events.dataSubmission.created, newDataSubmission);
         return newDataSubmission;
+    }
+
+    public async bulkCreate(dataSubmissions: DataSubmission[]): Promise<DataSubmission[]> {
+        const savedDataSubmissions: DataSubmission[] = [];
+
+        if (dataSubmissions) {
+            for (const dataSubmission of dataSubmissions) {
+                savedDataSubmissions.push(await this.create(dataSubmission));
+            }
+        }
+        return savedDataSubmissions;
     }
 
     public async update(dataSubmission: DataSubmission): Promise<DataSubmission> {
@@ -78,12 +94,28 @@ export class DataSubmissionService {
     public async delete(id: number): Promise<void> {
         this.log.info('Delete a data submission');
 
-        // Clean up all registered samples
-        await this.sampleRegistrationService.delete({
-            dataSubmissionId: id,
-        });
+        const dataSubmission: DataSubmission = await this.dataSubmissionRepository.findOne(id);
+        if (dataSubmission) {
+            const study: Study = await this.studyRepository.findOne(dataSubmission.studyId);
 
-        await this.dataSubmissionRepository.delete(id);
+            await this.dataSubmissionRepository.delete(id);
+
+            try {
+                await this.storageService.deleteDirectory(
+                    `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmission.id}.tmp`
+                );
+            } catch (err1) {
+                // No files found - ignore.
+            }
+            try {
+                await this.storageService.deleteDirectory(
+                    `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmission.id}`
+                );
+            } catch (err2) {
+                // No files found - ignore.
+            }
+        }
+
         return;
     }
 }
