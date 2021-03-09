@@ -102,4 +102,7 @@ export const env = {
     rules: {
         location: getOsEnvOptional('RULES_LOCATION', 'rules'),
     },
+    es: {
+        hosts: getOsEnv('ES_HOSTS').split(','),
+    },
 };
