@@ -9,7 +9,7 @@ export async function getAuthToken(): Promise<string> {
 
     params.append('grant_type', 'client_credentials');
     params.append('client_id', env.auth.clientId);
-    params.append('client_secret', env.auth.testClientSecret);
+    params.append('client_secret', env.auth.clientSecret);
 
     try {
         const response = await axios.post(tokenUrl, params, {

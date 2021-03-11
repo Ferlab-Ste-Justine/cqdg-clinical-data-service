@@ -20,7 +20,7 @@ export const env = {
     isTest: process.env.NODE_ENV === 'test',
     isDevelopment: process.env.NODE_ENV === 'development',
     app: {
-        name: getOsEnv('APP_NAME'),
+        name: getOsEnvOptional('APP_NAME', 'cqdg-clinical-data-service'),
         version: (pkg as any).version,
         description: (pkg as any).description,
         host: getOsEnv('APP_HOST'),
@@ -46,7 +46,7 @@ export const env = {
         realm: authEnabled ? getOsEnv('AUTH_REALM') : getOsEnvOptional('AUTH_REALM'),
         serverUrl: authEnabled ? getOsEnv('AUTH_SERVER_URL') : getOsEnvOptional('AUTH_SERVER_URL'),
         clientId: authEnabled ? getOsEnv('AUTH_CLIENT_ID') : getOsEnvOptional('AUTH_CLIENT_ID'),
-        testClientSecret: getOsEnvOptional('AUTH_TEST_CLIENT_SECRET'),
+        clientSecret: getOsEnvOptional('AUTH_CLIENT_SECRET'),
     },
     lectern: {
         serverUrl: getOsEnv('LECTERN_SERVER_URL'),
