@@ -76,8 +76,8 @@ export class DownloadController extends BaseController {
         const archive: any = await this.generateTSVArchive(accumulator);
 
         const sendResponse = async (file) => {
-            response.setHeader('Content-disposition', 'attachment; filename=clinical-data.zip');
-            response.setHeader('Content-type', 'application/octet-stream');
+            response.setHeader('Content-Disposition', 'attachment; filename=clinical-data.zip');
+            response.setHeader('Content-Type', 'application/octet-stream');
             response.setHeader('Content-Length', file.length);
             response.send(file);
         };
