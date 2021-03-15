@@ -300,6 +300,31 @@ export class UploadController extends BaseController {
         return validationReport;
     }
 
+    /**
+     * Step 5 - Sign-off : this step will trigger the ETL and data will be indexed.
+     */
+    @Post('/:dataSubmissionId/clinical-data/complete')
+    public async signOff(
+        @Param('dataSubmissionId') dataSubmissionId: number,
+        @CurrentUser() user: User,
+        @Req() request: any,
+        @Res() response: any
+    ): Promise<boolean> {
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
+
+        if (!(await this.isAllowed(user, dataSubmission))) {
+            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
+        }
+
+        const to = `clinical-data/${dataSubmission.study.createdBy}/${dataSubmission.study.id}-${dataSubmission.study.code}/${dataSubmissionId}`;
+        const from = `${to}.tmp`;
+
+        await this.storageService.moveDirectory(from, to);
+        await this.storageService.store(`${to}/ready`, Buffer.from('ready', 'utf-8'));
+
+        return true;
+    }
+
     private async isAllowed(user: User, dataSubmission: number | DataSubmission): Promise<boolean> {
         if (!(dataSubmission instanceof DataSubmission)) {
             dataSubmission = await this.dataSubmissionService.findOne(dataSubmission);

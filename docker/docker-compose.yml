@@ -1,6 +1,72 @@
 version: '3.5'
 
 services:
+#  cqdg-data-submission-service:
+#    image: ferlabcrsj/cqdg-clinical-data-service:3b0bc2e65aee8df24512cdf55e71fb757d084864
+#    environment:
+#        - APP_NAME=cqdg-clinical-data-service
+#        - APP_SCHEMA=http
+#        - APP_HOST=192.168.0.16
+#        - APP_PORT=4000
+#        - APP_ROUTE_PREFIX=/api
+#        - APP_BANNER=true
+#        - AUTH_ENABLED=true
+#        - AUTH_REALM=CQDG
+#        - AUTH_SERVER_URL=https://auth.qa.cqdg.ferlab.bio
+#        - AUTH_CLIENT_ID=cqdg-client
+#        - LECTERN_SERVER_URL=https://schema.qa.cqdg.ferlab.bio
+#        - LECTERN_USERNAME=lectern
+#        - LECTERN_PASSWORD=lecternizethis9!
+#        - LECTERN_DICTIONARY_NAME=CQDG Data Dictionary
+#        - LECTERN_DEFAULT_LANGUAGE=en
+#        - ALLOWED_CPUS=2
+#        - FILE_UPLOAD_MAX_SIZE_MB=50
+#        - FILE_UPLOAD_MAX_NB_OF_FILES=11
+#        - FILE_UPLOAD_ALLOWED_MIMETYPES=text/tab-separated-values,text/csv
+#        - CACHE_CERT_TTL_IN_SECONDS=300
+#        - LOG_LEVEL=info
+#        - LOG_OUTPUT=dev
+#        - TYPEORM_CONNECTION=postgres
+#        - TYPEORM_HOST=192.168.0.16
+#        - TYPEORM_PORT=5532
+#        - TYPEORM_USERNAME=cqdg
+#        - TYPEORM_PASSWORD=password
+#        - TYPEORM_DATABASE=data_submission
+#        - TYPEORM_SYNCHRONIZE=false
+#        - TYPEORM_LOGGING=false
+#        - TYPEORM_LOGGER=advanced-console
+#        - TYPEORM_MIGRATIONS=src/database/migrations/**/*.ts
+#        - TYPEORM_MIGRATIONS_DIR=src/database/migrations
+#        - TYPEORM_ENTITIES=src/api/models/**/*.ts
+#        - TYPEORM_ENTITIES_DIR=src/api/models
+#        - TYPEORM_SEEDING_FACTORIES=src/database/factories/**/*.ts
+#        - TYPEORM_SEEDING_SEEDS=src/database/seeds/**/*.ts
+#        - CONTROLLERS=src/api/controllers/**/*Controller.ts
+#        - MIDDLEWARES=src/api/middlewares/**/*Middleware.ts
+#        - INTERCEPTORS=src/api/interceptors/**/*Interceptor.ts
+#        - SUBSCRIBERS=src/api/subscribers/**/*Subscriber.ts
+#        - RESOLVERS=src/api/resolvers/**/*Resolver.ts
+#        - GRAPHQL_ENABLED=true
+#        - GRAPHQL_ROUTE=/graphql
+#        - GRAPHQL_EDITOR=true
+#        - SWAGGER_ENABLED=true
+#        - SWAGGER_ROUTE=/swagger
+#        - MONITOR_ENABLED=true
+#        - MONITOR_ROUTE=/monitor
+#        - MONITOR_USERNAME=admin
+#        - MONITOR_PASSWORD=1234
+#        - S3_SIGNIN_REGION=chusj
+#        - S3_BUCKET_NAME=cqdg
+#        - S3_SERVICE_ENDPOINT=http://127.0.0.1:9000
+#        - S3_ACCESS_KEY=minio
+#        - S3_SECRET_KEY=minio123
+#        - RULES_LOCATION=rules
+#        - ES_HOSTS=http://localhost:9200
+#    ports:
+#        - 4000:4000
+#    depends_on:
+#        - "cqdg-data-submission-postgres"
+#        - "cqdg-data-submission-minio"
   cqdg-data-submission-postgres:
     image: postgres
     volumes:

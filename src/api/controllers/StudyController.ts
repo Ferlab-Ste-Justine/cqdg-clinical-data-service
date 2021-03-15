@@ -79,7 +79,7 @@ export class StudyController extends BaseController {
     }
 
     /**
-     * Step 1b - Create a version for an exsiting study
+     * Step 1b - Create a version for an existing study
      *
      * @param code
      * @param user

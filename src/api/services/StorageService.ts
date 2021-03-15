@@ -28,6 +28,28 @@ export class StorageService {
         return errors;
     }
 
+    public async moveDirectory(from: string, to: string): Promise<void> {
+        this.log.debug(`Moving ${from} to ${to}`);
+
+        const filesToMove: string[] = await this.listFiles(from);
+        if (filesToMove && filesToMove.length > 0) {
+            for (const f of filesToMove) {
+                this.log.debug(
+                    `moving ${f} to ${
+                        (to.endsWith('/') ? to.substring(0, to.length - 1) : to) +
+                        f.substring(f.lastIndexOf('/'), f.length)
+                    }`
+                );
+
+                await this.storage.moveFile(
+                    f,
+                    (to.endsWith('/') ? to.substring(0, to.length - 1) : to) + f.substring(f.lastIndexOf('/'), f.length)
+                );
+            }
+            await this.storage.deleteDirectory(from);
+        }
+    }
+
     public async deleteFile(filepath: string): Promise<void> {
         this.log.debug(`Deleting file ${filepath}`);
         return await this.storage.deleteFile(filepath);

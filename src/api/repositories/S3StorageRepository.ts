@@ -1,6 +1,8 @@
 import { Readable } from 'stream';
 import { Service } from 'typedi';
 import {
+    CopyObjectCommand,
+    CopyObjectCommandOutput,
     CreateBucketCommand,
     DeleteObjectsCommand,
     DeleteObjectsCommandOutput,
@@ -36,6 +38,21 @@ export class S3StorageRepository {
             credentialDefaultProvider: (input: any): Provider<Credentials> => this.credentialsProvider,
             endpoint: env.s3.serviceEndpoint,
         });
+    }
+
+    public async moveFile(from: string, to: string): Promise<void> {
+        const request = {
+            Bucket: env.s3.bucketName,
+            CopySource: `${env.s3.bucketName}/${from}`,
+            Key: to,
+        };
+
+        const result: CopyObjectCommandOutput = await this.s3.send(new CopyObjectCommand(request));
+        if (result.$metadata?.httpStatusCode >= 400) {
+            throw new Error(
+                `Failed to move ${from} to ${to}.  Request return HTTP code ${result.$metadata.httpStatusCode}`
+            );
+        }
     }
 
     public async deleteDirectory(directoryPath: string): Promise<void> {

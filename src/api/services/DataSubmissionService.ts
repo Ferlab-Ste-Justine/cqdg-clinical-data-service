@@ -33,7 +33,7 @@ export class DataSubmissionService {
         return this.dataSubmissionRepository.findOne(
             { id },
             {
-                relations: ['registeredSamples'],
+                relations: ['registeredSamples', 'study'],
             }
         );
     }

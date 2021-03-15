@@ -26,7 +26,7 @@ export const env = {
         host: getOsEnv('APP_HOST'),
         schema: getOsEnv('APP_SCHEMA'),
         routePrefix: getOsEnv('APP_ROUTE_PREFIX'),
-        port: normalizePort(process.env.PORT || getOsEnv('APP_PORT')) || 4000,
+        port: normalizePort(process.env.PORT || getOsEnvOptional('APP_PORT', '4000')),
         banner: toBool(getOsEnv('APP_BANNER')),
         cacheCertTTLInSeconds: toNumber(getOsEnvOptional('CACHE_CERT_TTL_IN_SECONDS', '300')),
         dirs: {
@@ -76,6 +76,9 @@ export const env = {
         database: getOsEnv('TYPEORM_DATABASE'),
         synchronize: toBool(getOsEnvOptional('TYPEORM_SYNCHRONIZE')),
         logging: toBool(getOsEnv('TYPEORM_LOGGING')),
+        ssl: {
+            ca: getOsEnvOptional('TYPEORM_SSL_CA'),
+        },
     },
     graphql: {
         enabled: toBool(getOsEnv('GRAPHQL_ENABLED')),

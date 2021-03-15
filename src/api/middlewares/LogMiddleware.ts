@@ -10,6 +10,7 @@ export class LogMiddleware implements ExpressMiddlewareInterface {
     private log = new Logger(__dirname);
 
     public use(req: express.Request, res: express.Response, next: express.NextFunction): any {
+        // env.log.output: https://github.com/expressjs/morgan#predefined-formats
         return morgan(env.log.output, {
             stream: {
                 write: this.log.info.bind(this.log),
