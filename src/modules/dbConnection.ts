@@ -20,11 +20,6 @@ const getTypeORMOptions = async (): Promise<ConnectionOptions> => {
         logging: env.db.logging,
         entities: env.app.dirs.entities,
         migrations: env.app.dirs.migrations,
-        ssl: env.db.ssl.ca
-            ? {
-                  ca: env.db.ssl.ca,
-              }
-            : false,
     });
 };
 

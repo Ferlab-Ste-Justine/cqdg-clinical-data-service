@@ -76,9 +76,6 @@ export const env = {
         database: getOsEnv('TYPEORM_DATABASE'),
         synchronize: toBool(getOsEnvOptional('TYPEORM_SYNCHRONIZE')),
         logging: toBool(getOsEnv('TYPEORM_LOGGING')),
-        ssl: {
-            ca: getOsEnvOptional('TYPEORM_SSL_CA'),
-        },
     },
     graphql: {
         enabled: toBool(getOsEnv('GRAPHQL_ENABLED')),

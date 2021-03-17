@@ -320,7 +320,7 @@ export class UploadController extends BaseController {
         const from = `${to}.tmp`;
 
         await this.storageService.moveDirectory(from, to);
-        await this.storageService.store(`${to}/ready`, Buffer.from('ready', 'utf-8'));
+        await this.storageService.store(`${to}/_SUCCESS`, Buffer.from('SUCCESS', 'utf-8'));
 
         return true;
     }
