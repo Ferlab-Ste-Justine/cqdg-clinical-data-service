@@ -18,6 +18,7 @@ export class AuthorizationMiddleware implements ExpressMiddlewareInterface {
         { methods: ['*'], path: env.monitor.route },
         { methods: ['GET'], path: '/socket.io' },
         { methods: ['GET'], path: '/favicon.ico' },
+        { methods: ['GET'], path: '/favicon-32x32.png' },
         { methods: ['GET'], path: env.graphql.route },
         { methods: ['GET'], path: env.app.routePrefix, exact: true },
     ];

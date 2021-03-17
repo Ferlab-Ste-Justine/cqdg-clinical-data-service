@@ -55,7 +55,9 @@ export const configureSwagger = async (app: express.Application): Promise<void> 
 
         swaggerFile.servers = [
             {
-                url: `${env.app.schema}://${env.app.host}:${env.app.port}${env.app.routePrefix}`,
+                url: env.isDevelopment
+                    ? `${env.app.schema}://${env.app.host}:${env.app.port}${env.app.routePrefix}`
+                    : `${env.app.schema}://${env.app.host}${env.app.routePrefix}`,
             },
         ];
 
