@@ -1,42 +1,22 @@
 import { Readable } from 'stream';
 import { Service } from 'typedi';
-import {
-    CopyObjectCommand,
-    CopyObjectCommandOutput,
-    CreateBucketCommand,
-    DeleteObjectsCommand,
-    DeleteObjectsCommandOutput,
-    GetObjectCommand,
-    GetObjectCommandOutput,
-    ListObjectsV2Command,
-    ListObjectsV2CommandOutput,
-    PutObjectCommand,
-    S3Client,
-} from '@aws-sdk/client-s3';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
-import { Credentials } from '@aws-sdk/types';
-import { Provider } from '@aws-sdk/types/types/util';
 import { env } from '../../env';
+import * as AWS from 'aws-sdk';
+import { AWSError } from 'aws-sdk';
 
 @Service()
 export class S3StorageRepository {
-    private readonly credentialsProvider: Provider<Credentials>;
-    private readonly s3: S3Client;
+    private readonly s3: AWS.S3;
 
     constructor(@Logger(__filename) private log: LoggerInterface) {
-        this.credentialsProvider = async (): Promise<Credentials> => {
-            return {
-                accessKeyId: env.s3.accessKey,
-                secretAccessKey: env.s3.secretKey,
-                sessionToken: undefined,
-                expiration: undefined,
-            };
-        };
-
-        this.s3 = new S3Client({
-            signingRegion: env.s3.signingRegion,
-            credentialDefaultProvider: (input: any): Provider<Credentials> => this.credentialsProvider,
+        this.s3 = new AWS.S3({
+            region: env.s3.signingRegion,
             endpoint: env.s3.serviceEndpoint,
+            s3ForcePathStyle: true,
+            accessKeyId: env.s3.accessKey,
+            secretAccessKey: env.s3.secretKey,
+            signatureVersion: 'v4',
         });
     }
 
@@ -47,12 +27,12 @@ export class S3StorageRepository {
             Key: to,
         };
 
-        const result: CopyObjectCommandOutput = await this.s3.send(new CopyObjectCommand(request));
-        if (result.$metadata?.httpStatusCode >= 400) {
-            throw new Error(
-                `Failed to move ${from} to ${to}.  Request return HTTP code ${result.$metadata.httpStatusCode}`
-            );
+        const result = await this.s3.copyObject(request).promise();
+        if (result?.$response?.error) {
+            throw new Error(`Failed to move ${from} to ${to}.\n\r ${this.parseAWSError(result.$response.error)}`);
         }
+
+        return Promise.resolve(undefined);
     }
 
     public async deleteDirectory(directoryPath: string): Promise<void> {
@@ -70,14 +50,13 @@ export class S3StorageRepository {
             },
         };
 
-        const result: DeleteObjectsCommandOutput = await this.s3.send(new DeleteObjectsCommand(request));
+        const result = await this.s3.deleteObjects(request).promise();
         if (result.Errors) {
-            throw new Error(JSON.stringify(result.Errors, undefined, 2));
+            throw new Error(
+                `Failed to delete directory ${directoryPath}\n\r${JSON.stringify(result.Errors, undefined, 2)}`
+            );
         }
-    }
 
-    public async deleteFile(filepath: string): Promise<void> {
-        throw new Error('Not implemented.');
         return Promise.resolve(undefined);
     }
 
@@ -89,25 +68,41 @@ export class S3StorageRepository {
         };
 
         const files: string[] = [];
-        let result: ListObjectsV2CommandOutput;
-        do {
-            result = await this.s3.send(new ListObjectsV2Command(request));
-            if (result && result.Contents) {
-                files.push(...result.Contents.map((o) => o.Key));
-            }
-            request.ContinuationToken = result.NextContinuationToken;
-        } while (result.IsTruncated);
+
+        try {
+            let result;
+            do {
+                result = await this.s3.listObjectsV2(request).promise();
+                if (result?.$response?.error) {
+                    throw new Error(
+                        `Failed to list files in ${directoryPath}\n\r${this.parseAWSError(result?.$response?.error)}`
+                    );
+                }
+                if (result && result.Contents) {
+                    files.push(...result.Contents.map((o) => o.Key));
+                }
+                request.ContinuationToken = result.NextContinuationToken;
+            } while (result.IsTruncated);
+        } catch (err) {
+            // no files found
+            // perhaps the prefix does not exist in the bucket?
+            this.log.debug(`No files found in ${env.s3.bucketName}/${directoryPath}`);
+        }
 
         return files;
     }
 
-    public async read(filename: string): Promise<Readable | ReadableStream | Blob> {
+    public async read(filename: string): Promise<any> {
         const request = {
             Bucket: env.s3.bucketName,
             Key: filename,
         };
 
-        const result: GetObjectCommandOutput = await this.s3.send(new GetObjectCommand(request));
+        const result = await this.s3.getObject(request).promise();
+
+        if (result?.$response?.error) {
+            throw new Error(`Failed to retrieve file ${filename}\n\r${this.parseAWSError(result.$response.error)}`);
+        }
 
         return result.Body;
     }
@@ -116,7 +111,7 @@ export class S3StorageRepository {
         const bucketParams = { Bucket: env.s3.bucketName };
 
         try {
-            const data = await this.s3.send(new CreateBucketCommand(bucketParams));
+            const data = await this.s3.createBucket(bucketParams).promise();
             this.log.info('Success. Bucket created.', data);
         } catch (err) {
             if ('BucketAlreadyOwnedByYou' !== err.name) {
@@ -133,14 +128,20 @@ export class S3StorageRepository {
             CacheControl: 'no-cache',
         };
 
-        try {
-            const results = await this.s3.send(new PutObjectCommand(request));
-            this.log.debug('Successfully uploaded data to ' + env.s3.bucketName + '/' + filename, results);
-        } catch (err) {
-            this.log.error(`Failed to save ${filename}`, err);
-            throw err;
+        const result = await this.s3.putObject(request).promise();
+        if (result?.$response?.error) {
+            throw new Error(
+                `Failed to upload data to ${env.s3.bucketName}/${filename}\n\r${this.parseAWSError(
+                    result.$response.error
+                )}`
+            );
         }
+        this.log.debug(`Successfully uploaded data to ${env.s3.bucketName}/${filename}`, result);
 
         return Promise.resolve(undefined);
+    }
+
+    private parseAWSError(err: AWSError): string {
+        return `Error code: ${err.code}\n\rStatus code: ${err.statusCode}\n\rError message: ${err.message}\n\rStacktrace: \n\r${err.stack}`;
     }
 }

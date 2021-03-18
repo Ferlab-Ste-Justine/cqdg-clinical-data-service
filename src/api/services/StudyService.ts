@@ -61,12 +61,7 @@ export class StudyService {
 
             try {
                 await this.storageService.deleteDirectory(`clinical-data/${study.createdBy}/${study.id}-${study.code}`);
-            } catch (err1) {
-                // No files found - ignore.
-            }
-            try {
-                await this.storageService.deleteDirectory(`clinical-data/${study.createdBy}/${study.id}-${study.code}`);
-            } catch (err2) {
+            } catch (err) {
                 // No files found - ignore.
             }
         }

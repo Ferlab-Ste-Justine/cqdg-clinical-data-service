@@ -50,11 +50,6 @@ export class StorageService {
         }
     }
 
-    public async deleteFile(filepath: string): Promise<void> {
-        this.log.debug(`Deleting file ${filepath}`);
-        return await this.storage.deleteFile(filepath);
-    }
-
     public async deleteDirectory(directoryPath: string): Promise<void> {
         this.log.debug(`Deleting directory ${directoryPath}`);
         return await this.storage.deleteDirectory(directoryPath);
@@ -65,7 +60,7 @@ export class StorageService {
         return await this.storage.listFiles(directoryPath);
     }
 
-    public async read(filepath: string): Promise<Readable | ReadableStream | Blob> {
+    public async read(filepath: string): Promise<any> {
         this.log.debug(`Retrieving ${filepath}`);
         return await this.storage.read(filepath);
     }
@@ -79,6 +74,8 @@ export class StorageService {
                 stream.on('error', reject);
                 stream.on('end', () => resolve(Buffer.concat(chunks).toString(enc)));
             });
+        } else if (stream instanceof Buffer) {
+            return stream.toString('utf-8');
         } else {
             throw new Error('Unknown object stream type');
         }
