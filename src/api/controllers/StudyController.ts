@@ -46,7 +46,6 @@ export class StudyController extends BaseController {
 
         if (!studies || studies.length === 0) {
             this.log.debug(`No studies found for user ${user.id}`);
-            response.status(404);
         }
 
         return studies;

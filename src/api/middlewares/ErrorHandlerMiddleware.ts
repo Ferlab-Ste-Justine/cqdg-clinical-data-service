@@ -17,11 +17,6 @@ export class ErrorHandlerMiddleware implements ExpressErrorMiddlewareInterface {
             message: error.message,
             errors: error[`errors`] || [],
         });
-
-        if (this.isProduction) {
-            this.log.error(error.name, error.message);
-        } else {
-            this.log.error(error.name, error.stack);
-        }
+        this.log.error(error.name, error.stack);
     }
 }
