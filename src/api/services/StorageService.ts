@@ -15,13 +15,13 @@ export class StorageService {
             // Saved in s3 to eventually be processed by ETL
             await this.storage.store(filename, file);
         } catch (error) {
-            errors = Object.keys(error).map(
-                (key) =>
-                    new SystemError(
-                        error[key].Code,
-                        `Error: ${error[key].name}, Bucket: ${error[key].BucketName}, File: ${filename}`,
-                        error[key]
-                    )
+            errors = [];
+            errors.push(
+                new SystemError(
+                    'undefined',
+                    `Failed to write ${filename} to object store`,
+                    JSON.stringify(error, undefined, 2)
+                )
             );
         }
 

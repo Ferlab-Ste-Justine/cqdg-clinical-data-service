@@ -114,10 +114,7 @@ export class S3StorageRepository {
             const data = await this.s3.createBucket(bucketParams).promise();
             this.log.info('Success. Bucket created.', data);
         } catch (err) {
-            if ('BucketAlreadyOwnedByYou' !== err.name) {
-                this.log.error(`Could not create bucket ${env.s3.bucketName}.`, err);
-                throw err;
-            }
+            this.log.debug(`Bucket ${env.s3.bucketName} probably already exists.`, err);
         }
 
         const request = {
