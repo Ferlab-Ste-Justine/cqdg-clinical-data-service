@@ -320,7 +320,19 @@ export class UploadController extends BaseController {
         const from = `${to}.tmp`;
 
         await this.storageService.moveDirectory(from, to);
-        await this.storageService.store(`${to}/_SUCCESS`, Buffer.from('SUCCESS', 'utf-8'));
+
+        // Must be an array for Spark to understand.
+        const metadata = [
+            {
+                studyVersionDate: this.formatDate(dataSubmission.creationDate),
+                studyVersionAuthor: dataSubmission.createdBy,
+                dictionaryVersion: dataSubmission.dictionaryVersion,
+            },
+        ];
+        await this.storageService.store(
+            `${to}/study_version_metadata.json`,
+            Buffer.from(JSON.stringify(metadata, undefined, 2), 'utf-8')
+        );
 
         return true;
     }
@@ -330,5 +342,16 @@ export class UploadController extends BaseController {
             dataSubmission = await this.dataSubmissionService.findOne(dataSubmission);
         }
         return user.id === dataSubmission.createdBy;
+    }
+
+    private formatDate(date: Date): String {
+        let month = '' + (date.getMonth() + 1);
+        let day = '' + date.getDate();
+        const year = date.getFullYear();
+
+        if (month.length < 2) month = '0' + month;
+        if (day.length < 2) day = '0' + day;
+
+        return [year, month, day].join('-');
     }
 }
