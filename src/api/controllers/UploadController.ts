@@ -153,7 +153,7 @@ export class UploadController extends BaseController {
             const study: Study = await this.studyService.findOne(updatedDataSubmission.studyId);
 
             const errors: SystemError[] = await this.storageService.store(
-                `clinical-data/${study.createdBy}/${study.id}-${study.code}/${updatedDataSubmission.id}.tmp/${file.originalname}`,
+                `clinical-data/${study.createdBy}/${study.id}-${study.code}/${updatedDataSubmission.id}/${file.originalname}`,
                 file.buffer
             );
 
@@ -245,7 +245,7 @@ export class UploadController extends BaseController {
                 // N.B.: There will always be a dataSubmissionId here; thus, it will always update, not create.
                 this.storageService
                     .store(
-                        `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmissionId}.tmp/${f.originalname}`,
+                        `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmissionId}/${f.originalname}`,
                         f.buffer
                     )
                     .then((errors) => {
@@ -316,11 +316,6 @@ export class UploadController extends BaseController {
             throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
         }
 
-        const to = `clinical-data/${dataSubmission.study.createdBy}/${dataSubmission.study.id}-${dataSubmission.study.code}/${dataSubmissionId}`;
-        const from = `${to}.tmp`;
-
-        await this.storageService.moveDirectory(from, to);
-
         // Must be an array for Spark to understand.
         const metadata = [
             {
@@ -329,8 +324,10 @@ export class UploadController extends BaseController {
                 dictionaryVersion: dataSubmission.dictionaryVersion,
             },
         ];
+
+        // The addition of the study_version_metadata.json is what is going to trigger the ETL to process the keys that siblings to this file
         await this.storageService.store(
-            `${to}/study_version_metadata.json`,
+            `clinical-data/${dataSubmission.study.createdBy}/${dataSubmission.study.id}-${dataSubmission.study.code}/${dataSubmissionId}/study_version_metadata.json`,
             Buffer.from(JSON.stringify(metadata, undefined, 2), 'utf-8')
         );
 

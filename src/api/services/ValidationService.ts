@@ -55,7 +55,7 @@ export class ValidationService {
         const dataframes: { [key: string]: DataFrame<number, any> } = {};
 
         const files: string[] = await this.storageService.listFiles(
-            `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmission.id}.tmp`
+            `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmission.id}`
         );
 
         // Re-run all Lectern validations

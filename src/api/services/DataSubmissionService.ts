@@ -102,16 +102,9 @@ export class DataSubmissionService {
 
             try {
                 await this.storageService.deleteDirectory(
-                    `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmission.id}.tmp`
-                );
-            } catch (err1) {
-                // No files found - ignore.
-            }
-            try {
-                await this.storageService.deleteDirectory(
                     `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmission.id}`
                 );
-            } catch (err2) {
+            } catch (err) {
                 // No files found - ignore.
             }
         }
