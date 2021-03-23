@@ -78,7 +78,7 @@ export class DownloadController extends BaseController {
         const sendResponse = async (file) => {
             response.setHeader('Content-Disposition', 'attachment; filename=clinical-data.zip');
             response.setHeader('Content-Type', 'application/octet-stream');
-            response.setHeader('Content-Length', file.length);
+            // response.setHeader('Content-Length', file.length);
             response.send(file);
         };
 
