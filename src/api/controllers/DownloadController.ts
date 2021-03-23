@@ -79,7 +79,7 @@ export class DownloadController extends BaseController {
         response.setHeader('Content-Type', 'application/octet-stream');
         response.send(archive);
 
-        return response;
+        return true;
     }
 
     private findNestedFields(sqon: any): string[] {
