@@ -77,9 +77,8 @@ export class DownloadController extends BaseController {
 
         response.setHeader('Content-Disposition', 'attachment; filename=clinical-data.zip');
         response.setHeader('Content-Type', 'application/octet-stream');
-        response.send(archive);
 
-        return true;
+        return response.send(archive);
     }
 
     private findNestedFields(sqon: any): string[] {
