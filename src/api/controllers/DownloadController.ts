@@ -57,9 +57,6 @@ export class DownloadController extends BaseController {
         @Res() response: any,
         @CurrentUser() user: User
     ): Promise<any> {
-        request.setTimeout(360000);
-        response.connection.setTimeout(360000);
-
         const nestedFields = this.findNestedFields(filters);
         const sqon = {
             nestedFields,
