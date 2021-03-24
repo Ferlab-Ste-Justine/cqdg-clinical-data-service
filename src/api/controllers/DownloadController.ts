@@ -1,4 +1,4 @@
-import { Authorized, Body, CurrentUser, JsonController, Post, Req, Res } from 'routing-controllers';
+import { Authorized, Body, CurrentUser, Header, JsonController, Post, Req, Res } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { BaseController } from './BaseController';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
@@ -17,6 +17,8 @@ export class DownloadController extends BaseController {
     }
 
     @Post('/clinical')
+    @Header('Content-Disposition', 'attachment; filename=clinical-data.zip')
+    @Header('Content-Type', 'application/octet-stream')
     @OpenAPI({
         requestBody: {
             content: {
@@ -73,26 +75,13 @@ export class DownloadController extends BaseController {
 
         // Convert each entity list into a TSV file
         // Then zip all TSV into a single archive.
-        const archive: AdmZip = await this.generateTSVArchive(accumulator);
-
-        const waitForBuffer = (zip: AdmZip): Promise<Buffer> =>
-            new Promise<any>((resolve, reject) => {
-                zip.toBuffer(
-                    (buffer) => resolve(buffer),
-                    (err: any[]) => reject(JSON.stringify(err))
-                );
-            });
-
         try {
-            const result = await waitForBuffer(archive);
-            response.setHeader('Content-Disposition', 'attachment; filename=clinical-data.zip');
-            response.setHeader('Content-Type', 'application/octet-stream');
-
+            const result = await this.generateTSVArchive(accumulator);
+            this.log.debug('Successfully generated the zip archive');
             return response.send(result);
         } catch (err) {
             this.log.error('Failed to generate archive.', err);
             response.status(500);
-
             return err;
         }
     }
@@ -136,7 +125,7 @@ export class DownloadController extends BaseController {
     private async generateTSVArchive(
         accumulator: { [key: string]: any },
         columns: string[] = undefined
-    ): Promise<AdmZip> {
+    ): Promise<Buffer> {
         const zip = new AdmZip();
         const tsvConfig: UnparseConfig = {
             delimiter: '\t',
@@ -151,6 +140,14 @@ export class DownloadController extends BaseController {
             zip.addFile(`${key}.tsv`, Buffer.from(tsv, 'utf8'));
         });
 
-        return zip;
+        const waitForBuffer = (archive: AdmZip): Promise<Buffer> =>
+            new Promise<any>((resolve, reject) => {
+                archive.toBuffer(
+                    (buffer) => resolve(buffer),
+                    (err: any[]) => reject(JSON.stringify(err))
+                );
+            });
+
+        return await waitForBuffer(zip);
     }
 }
