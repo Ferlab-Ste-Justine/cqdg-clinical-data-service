@@ -73,12 +73,28 @@ export class DownloadController extends BaseController {
 
         // Convert each entity list into a TSV file
         // Then zip all TSV into a single archive.
-        const archive: any = await this.generateTSVArchive(accumulator);
+        const archive: AdmZip = await this.generateTSVArchive(accumulator);
 
-        response.setHeader('Content-Disposition', 'attachment; filename=clinical-data.zip');
-        response.setHeader('Content-Type', 'application/octet-stream');
+        const waitForBuffer = (zip: AdmZip): Promise<Buffer> =>
+            new Promise<any>((resolve, reject) => {
+                zip.toBuffer(
+                    (buffer) => resolve(buffer),
+                    (err: any[]) => reject(JSON.stringify(err))
+                );
+            });
 
-        return response.send(archive);
+        try {
+            const result = await waitForBuffer(archive);
+            response.setHeader('Content-Disposition', 'attachment; filename=clinical-data.zip');
+            response.setHeader('Content-Type', 'application/octet-stream');
+
+            return response.send(result);
+        } catch (err) {
+            this.log.error('Failed to generate archive.', err);
+            response.status(500);
+
+            return err;
+        }
     }
 
     private findNestedFields(sqon: any): string[] {
@@ -120,7 +136,7 @@ export class DownloadController extends BaseController {
     private async generateTSVArchive(
         accumulator: { [key: string]: any },
         columns: string[] = undefined
-    ): Promise<Buffer> {
+    ): Promise<AdmZip> {
         const zip = new AdmZip();
         const tsvConfig: UnparseConfig = {
             delimiter: '\t',
@@ -135,6 +151,6 @@ export class DownloadController extends BaseController {
             zip.addFile(`${key}.tsv`, Buffer.from(tsv, 'utf8'));
         });
 
-        return zip.toBuffer();
+        return zip;
     }
 }
