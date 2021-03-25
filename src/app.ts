@@ -37,8 +37,8 @@ getDBConnection()
             defaultErrorHandler: false,
 
             controllers: env.app.dirs.controllers,
-            //middlewares: env.app.dirs.middlewares,
-            //interceptors: env.app.dirs.interceptors,
+            // middlewares: env.app.dirs.middlewares,
+            // interceptors: env.app.dirs.interceptors,
 
             authorizationChecker: authorizationChecker(connection),
             currentUserChecker: currentUserChecker(connection),
