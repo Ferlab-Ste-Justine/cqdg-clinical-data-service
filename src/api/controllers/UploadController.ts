@@ -314,6 +314,7 @@ export class UploadController extends BaseController {
         // Must be an array for Spark to understand.
         const metadata = [
             {
+                studyVersionId: studyVersionId,
                 studyVersionDate: this.formatDate(dataSubmission.creationDate),
                 studyVersionAuthor: dataSubmission.createdBy,
                 dictionaryVersion: dataSubmission.dictionaryVersion,
