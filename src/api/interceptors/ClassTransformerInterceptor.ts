@@ -5,6 +5,9 @@ import { classToPlain } from 'class-transformer';
 export class ClassTransformerInterceptor implements InterceptorInterface {
     public intercept(action: Action, content: any): any {
         // class-transformer will remove all content annotated with @Exclude() in the response
-        return classToPlain(content);
+        if ('application/json' === (action.response.getHeader('Content-Type') || '').toLowerCase()) {
+            return classToPlain(content);
+        }
+        return content;
     }
 }

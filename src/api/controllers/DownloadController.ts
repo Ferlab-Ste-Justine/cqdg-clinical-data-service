@@ -79,7 +79,7 @@ export class DownloadController extends BaseController {
 
             response.set({
                 'Content-Disposition': 'attachment; filename=clinical-data.zip',
-                'Content-Type': 'application/zip',
+                'Content-Type': 'application/octet-stream',
             });
 
             return response.send(result);

@@ -68,10 +68,7 @@ export class StudyController extends BaseController {
         const dataSubmission: DataSubmission = new DataSubmission();
         dataSubmission.createdBy = user.id;
 
-        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BEFORE LECTERN');
         const schemas = await this.fetchDictionary(request, this.lecternService);
-        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> LECTERN CALL WORKED FINE');
-        console.log(JSON.stringify(schemas, undefined, 2));
         dataSubmission.dictionaryVersion = schemas.version;
 
         study.dataSubmissions = [dataSubmission];
