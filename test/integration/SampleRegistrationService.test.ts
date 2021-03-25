@@ -4,7 +4,6 @@ import { closeDatabase, createDatabaseConnection, migrateDatabase } from '../uti
 import { configureLogger } from '../../src/modules/logger';
 import { DataSubmission } from '../../src/api/models/DataSubmission';
 import { DataSubmissionService } from '../../src/api/services/DataSubmissionService';
-import { Status } from '../../src/api/models/ReferentialData';
 import * as uuid from 'uuid';
 import { SampleRegistration } from '../../src/api/models/SampleRegistration';
 import { SampleRegistrationService } from '../../src/api/services/SampleRegistrationService';
@@ -36,9 +35,7 @@ describe('SampleRegistrationService', () => {
         const sampleRegistrationService = Container.get<SampleRegistrationService>(SampleRegistrationService);
 
         const dataSubmission = new DataSubmission();
-        dataSubmission.code = 'TEST';
         dataSubmission.dictionaryVersion = '5.12';
-        dataSubmission.status = Status.INITIATED;
         dataSubmission.createdBy = uuid.v1();
 
         const dataSubmissionResultCreate = await dataSubmissionService.create(dataSubmission);
