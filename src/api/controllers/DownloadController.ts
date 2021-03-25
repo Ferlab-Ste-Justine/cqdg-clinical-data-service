@@ -1,4 +1,4 @@
-import { Authorized, Body, CurrentUser, Header, JsonController, Post, Req, Res } from 'routing-controllers';
+import { Authorized, Body, CurrentUser, JsonController, Post, Req, Res } from 'routing-controllers';
 import { OpenAPI } from 'routing-controllers-openapi';
 import { BaseController } from './BaseController';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
@@ -17,8 +17,6 @@ export class DownloadController extends BaseController {
     }
 
     @Post('/clinical')
-    @Header('Content-Disposition', 'attachment; filename=clinical-data.zip')
-    @Header('Content-Type', 'application/octet-stream')
     @OpenAPI({
         requestBody: {
             content: {
@@ -78,6 +76,12 @@ export class DownloadController extends BaseController {
         try {
             const result = await this.generateTSVArchive(accumulator);
             this.log.debug('Successfully generated the zip archive');
+
+            response.set({
+                'Content-Disposition': 'attachment; filename=clinical-data.zip',
+                'Content-Type': 'application/zip',
+            });
+
             return response.send(result);
         } catch (err) {
             this.log.error('Failed to generate archive.', err);
