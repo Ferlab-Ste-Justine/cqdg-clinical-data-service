@@ -19,12 +19,10 @@ describe('DataSubmissionService', () => {
     const createdBy: string = uuid.v1();
 
     let connection: Connection;
-    let study: Study;
 
     beforeAll(async () => {
         configureLogger();
         connection = await createDatabaseConnection();
-        study = await createStudy();
     });
     beforeEach(() => migrateDatabase(connection));
 
@@ -36,11 +34,11 @@ describe('DataSubmissionService', () => {
 
     const createStudy = async (): Promise<Study> => {
         const service = Container.get<StudyService>(StudyService);
-        const study: Study = new Study();
-        study.code = 'TEST';
-        study.createdBy = createdBy;
+        const st: Study = new Study();
+        st.code = uuid.v1();
+        st.createdBy = createdBy;
 
-        return await service.create(study);
+        return await service.create(st);
     };
 
     // -------------------------------------------------------------------------
@@ -94,12 +92,14 @@ describe('DataSubmissionService', () => {
     // -------------------------------------------------------------------------
 
     test('should create a new data submission in the database', async (done) => {
+        const study = await createStudy();
         const dataSubmission = new DataSubmission();
-        dataSubmission.studyId = study.id;
-        dataSubmission.study = study;
+
         dataSubmission.dictionaryVersion = '5.12';
         dataSubmission.createdBy = createdBy;
         dataSubmission.statusReport = getUploadReport();
+        dataSubmission.studyId = study.id;
+        dataSubmission.study = study;
 
         const service = Container.get<DataSubmissionService>(DataSubmissionService);
         const resultCreate = await service.create(dataSubmission);
@@ -127,12 +127,14 @@ describe('DataSubmissionService', () => {
     });
 
     test('should create a new data submission with samples in the database', async (done) => {
+        const study = await createStudy();
         const dataSubmission = new DataSubmission();
-        dataSubmission.studyId = study.id;
-        dataSubmission.study = study;
+
         dataSubmission.dictionaryVersion = '5.12';
         dataSubmission.createdBy = createdBy;
         dataSubmission.registeredSamples = [];
+        dataSubmission.studyId = study.id;
+        dataSubmission.study = study;
 
         const sample1: SampleRegistration = new SampleRegistration({
             study_id: 'ST0001',

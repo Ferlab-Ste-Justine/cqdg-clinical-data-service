@@ -1,15 +1,12 @@
 import { validate } from 'class-validator';
 import * as uuid from 'uuid';
 import { DataSubmission } from '../../../src/api/models/DataSubmission';
-import { Status } from '../../../src/api/models/ReferentialData';
 import { SampleRegistration } from '../../../src/api/models/SampleRegistration';
 
 describe('Validations', () => {
     test('Data submission validation should succeed with all required fields', async (done) => {
         const dataSubmission = new DataSubmission();
         dataSubmission.id = 1;
-        dataSubmission.code = 'TEST';
-        dataSubmission.status = Status.INITIATED;
         dataSubmission.dictionaryVersion = '5.12';
         dataSubmission.createdBy = uuid.v1();
         dataSubmission.creationDate = new Date();

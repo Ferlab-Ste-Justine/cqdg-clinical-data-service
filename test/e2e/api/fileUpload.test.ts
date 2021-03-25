@@ -2,9 +2,9 @@ import { bootstrapApp, BootstrapSettings, startMinio, stopMinio } from '../utils
 import fs from 'fs';
 import path from 'path';
 import request from 'supertest';
-import axios from 'axios';
-import FormData from 'form-data';
-import { env } from '../../../src/env';
+// import axios from 'axios';
+// import FormData from 'form-data';
+// import { env } from '../../../src/env';
 import { getAuthToken } from '../../utils/helpers';
 
 describe('/api', () => {
@@ -19,11 +19,11 @@ describe('/api', () => {
     let dataSubmissionId: number;
     let authToken: string;
 
-    const getHeaders = (form: FormData = undefined): any => {
+    /*const getHeaders = (form: FormData = undefined): any => {
         const headers = form ? form.getHeaders() : {};
         headers.Authorization = `Bearer ${authToken}`;
         return headers;
-    };
+    };*/
 
     const loadSamples = async () => {
         /*const form = new FormData();
@@ -51,14 +51,14 @@ describe('/api', () => {
 
         try {
             const res1 = await request(settings.app)
-                .post(`/api/submission/TEST-SUBMISSION`)
+                .post(`/api/study/TEST-STUDY`)
                 .set('Accept', 'application/json')
                 .set('Content-Type', 'application/json; charset=utf-8')
                 .set('Accept-Language', 'en')
                 .set('Authorization', `Bearer ${authToken}`)
                 .expect(200);
 
-            dataSubmissionId = res1.body;
+            dataSubmissionId = res1.body.dataSubmissions[0].id;
 
             await request(settings.app)
                 .post(`/api/submission/${dataSubmissionId}/samples`)
@@ -68,8 +68,6 @@ describe('/api', () => {
                 .set('Authorization', `Bearer ${authToken}`)
                 .attach('file', fs.createReadStream(path.resolve(__dirname, '../../resources/sample_registration.csv')))
                 .expect(200);
-
-            // console.log(`>>>>>>>>>> Samples loaded for data submission ${dataSubmissionId}.`);
         } catch (err) {
             fail(err);
         }
@@ -97,7 +95,7 @@ describe('/api', () => {
     // -------------------------------------------------------------------------
     // Test cases
     // -------------------------------------------------------------------------
-    test.skip('POST: /api/submission/${dataSubmissionId}/clinical-data should return validation errors - axios example', async (done) => {
+    /*test.skip('POST: /api/submission/${dataSubmissionId}/clinical-data should return validation errors - axios example', async (done) => {
         const form = new FormData();
         form.append('files', fs.createReadStream(path.resolve(__dirname, '../../resources/biospecimen.tsv')));
         form.append('files', fs.createReadStream(path.resolve(__dirname, '../../resources/donor.tsv')));
@@ -115,7 +113,7 @@ describe('/api', () => {
                 expect(error.response.headers['content-type']).toEqual('application/json; charset=utf-8');
             })
             .finally(() => done());
-    });
+    });*/
 
     test('POST: /api/submission/${dataSubmissionId}/clinical-data should return validation errors', async (done) => {
         await request(settings.app)

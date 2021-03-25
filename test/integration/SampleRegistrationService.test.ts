@@ -7,18 +7,30 @@ import { DataSubmissionService } from '../../src/api/services/DataSubmissionServ
 import * as uuid from 'uuid';
 import { SampleRegistration } from '../../src/api/models/SampleRegistration';
 import { SampleRegistrationService } from '../../src/api/services/SampleRegistrationService';
+import { Study } from '../../src/api/models/Study';
+import { StudyService } from '../../src/api/services/StudyService';
 
 describe('SampleRegistrationService', () => {
     // -------------------------------------------------------------------------
     // Setup up
     // -------------------------------------------------------------------------
-
+    const createdBy: string = uuid.v1();
     let connection: Connection;
+
     beforeAll(async () => {
         configureLogger();
         connection = await createDatabaseConnection();
     });
     beforeEach(() => migrateDatabase(connection));
+
+    const createStudy = async (): Promise<Study> => {
+        const service = Container.get<StudyService>(StudyService);
+        const st: Study = new Study();
+        st.code = uuid.v1();
+        st.createdBy = createdBy;
+
+        return await service.create(st);
+    };
 
     // -------------------------------------------------------------------------
     // Tear down
@@ -34,9 +46,12 @@ describe('SampleRegistrationService', () => {
         const dataSubmissionService = Container.get<DataSubmissionService>(DataSubmissionService);
         const sampleRegistrationService = Container.get<SampleRegistrationService>(SampleRegistrationService);
 
+        const study = await createStudy();
         const dataSubmission = new DataSubmission();
         dataSubmission.dictionaryVersion = '5.12';
         dataSubmission.createdBy = uuid.v1();
+        dataSubmission.studyId = study.id;
+        dataSubmission.study = study;
 
         const dataSubmissionResultCreate = await dataSubmissionService.create(dataSubmission);
 

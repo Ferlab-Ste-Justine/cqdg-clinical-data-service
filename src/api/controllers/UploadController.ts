@@ -64,22 +64,19 @@ export class UploadController extends BaseController {
         super();
     }
 
-    @Delete('/:dataSubmissionId')
-    public async delete(
-        @Param('dataSubmissionId') dataSubmissionId: number,
-        @CurrentUser() user: User
-    ): Promise<number> {
-        if (!(await this.isAllowed(user, dataSubmissionId))) {
-            throw new UnauthorizedError(`User ${user.id} not allowed to delete submission ${dataSubmissionId}`);
+    @Delete('/:studyVersionId')
+    public async delete(@Param('studyVersionId') studyVersionId: number, @CurrentUser() user: User): Promise<number> {
+        if (!(await this.isAllowed(user, studyVersionId))) {
+            throw new UnauthorizedError(`User ${user.id} not allowed to delete submission ${studyVersionId}`);
         }
 
         try {
-            await this.dataSubmissionService.delete(dataSubmissionId);
+            await this.dataSubmissionService.delete(studyVersionId);
         } catch (err3) {
-            throw new NotFoundError(`No submission with id ${dataSubmissionId}.`);
+            throw new NotFoundError(`No submission with id ${studyVersionId}.`);
         }
 
-        return dataSubmissionId;
+        return studyVersionId;
     }
 
     /**
@@ -88,7 +85,7 @@ export class UploadController extends BaseController {
      * @param code
      * @param user
      */
-    @Post('/:dataSubmissionId/samples')
+    @Post('/:studyVersionId/samples')
     @OpenAPI({
         consumes: 'multipart/form-data',
         requestBody: {
@@ -115,12 +112,12 @@ export class UploadController extends BaseController {
         @Req() request: any,
         @Res() response: any,
         @CurrentUser() user: User,
-        @Param('dataSubmissionId') dataSubmissionId: number
+        @Param('studyVersionId') studyVersionId: number
     ): Promise<ValidationReport> {
-        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(studyVersionId);
 
         if (!(await this.isAllowed(user, dataSubmission))) {
-            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
+            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${studyVersionId}`);
         }
 
         const report = new ValidationReport();
@@ -174,7 +171,7 @@ export class UploadController extends BaseController {
      * @param code
      * @param user
      */
-    @Post('/:dataSubmissionId/clinical-data')
+    @Post('/:studyVersionId/clinical-data')
     @OpenAPI({
         consumes: 'multipart/form-data',
         requestBody: {
@@ -200,27 +197,25 @@ export class UploadController extends BaseController {
     })
     @ResponseSchema(ValidationReport)
     public async uploadClinicalData(
-        @Param('dataSubmissionId') dataSubmissionId: number,
+        @Param('studyVersionId') studyVersionId: number,
         @UploadedFiles('files', UploadController.uploadOptions) files: Express.Multer.File[],
         @Req() request: any,
         @Res() response: any,
         @CurrentUser() user?: User
     ): Promise<ValidationReport> {
-        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(studyVersionId);
 
         if (!(await this.isAllowed(user, dataSubmission))) {
-            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
+            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${studyVersionId}`);
         }
 
         const report = new ValidationReport();
 
         const schemas = await this.fetchDictionary(request, this.lecternService, dataSubmission.dictionaryVersion);
-        const dataSubmissionCount: number = await this.sampleRegistrationService.countByDataSubmission(
-            dataSubmissionId
-        );
+        const dataSubmissionCount: number = await this.sampleRegistrationService.countByDataSubmission(studyVersionId);
 
         if (!dataSubmissionCount || dataSubmissionCount === 0) {
-            throw new HttpError(400, `No samples are registered for data submission id ${dataSubmissionId}`);
+            throw new HttpError(400, `No samples are registered for data submission id ${studyVersionId}`);
         }
 
         const study: Study = await this.studyService.findOne(dataSubmission.studyId);
@@ -234,7 +229,7 @@ export class UploadController extends BaseController {
             const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
                 f,
                 schemas,
-                dataSubmissionId
+                studyVersionId
             );
 
             report.files.push(singleFileValidationStatus);
@@ -245,7 +240,7 @@ export class UploadController extends BaseController {
                 // N.B.: There will always be a dataSubmissionId here; thus, it will always update, not create.
                 this.storageService
                     .store(
-                        `clinical-data/${study.createdBy}/${study.id}-${study.code}/${dataSubmissionId}/${f.originalname}`,
+                        `clinical-data/${study.createdBy}/${study.id}-${study.code}/${studyVersionId}/${f.originalname}`,
                         f.buffer
                     )
                     .then((errors) => {
@@ -267,17 +262,17 @@ export class UploadController extends BaseController {
     /**
      * Step 4 - Cross validate the data
      */
-    @Post('/:dataSubmissionId/clinical-data/validate')
+    @Post('/:studyVersionId/clinical-data/validate')
     public async crossValidateAllData(
-        @Param('dataSubmissionId') dataSubmissionId: number,
+        @Param('studyVersionId') studyVersionId: number,
         @CurrentUser() user: User,
         @Req() request: any,
         @Res() response: any
     ): Promise<ValidationReport> {
-        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(studyVersionId);
 
         if (!(await this.isAllowed(user, dataSubmission))) {
-            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
+            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${studyVersionId}`);
         }
 
         const schemas = await this.fetchDictionary(request, this.lecternService, dataSubmission.dictionaryVersion);
@@ -303,17 +298,17 @@ export class UploadController extends BaseController {
     /**
      * Step 5 - Sign-off : this step will trigger the ETL and data will be indexed.
      */
-    @Post('/:dataSubmissionId/clinical-data/complete')
+    @Post('/:studyVersionId/clinical-data/complete')
     public async signOff(
-        @Param('dataSubmissionId') dataSubmissionId: number,
+        @Param('studyVersionId') studyVersionId: number,
         @CurrentUser() user: User,
         @Req() request: any,
         @Res() response: any
     ): Promise<boolean> {
-        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(dataSubmissionId);
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(studyVersionId);
 
         if (!(await this.isAllowed(user, dataSubmission))) {
-            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${dataSubmissionId}`);
+            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${studyVersionId}`);
         }
 
         // Must be an array for Spark to understand.
@@ -327,7 +322,7 @@ export class UploadController extends BaseController {
 
         // The addition of the study_version_metadata.json is what is going to trigger the ETL to process the keys that siblings to this file
         await this.storageService.store(
-            `clinical-data/${dataSubmission.study.createdBy}/${dataSubmission.study.id}-${dataSubmission.study.code}/${dataSubmissionId}/study_version_metadata.json`,
+            `clinical-data/${dataSubmission.study.createdBy}/${dataSubmission.study.id}-${dataSubmission.study.code}/${studyVersionId}/study_version_metadata.json`,
             Buffer.from(JSON.stringify(metadata, undefined, 2), 'utf-8')
         );
 
