@@ -253,7 +253,7 @@ export class ValidationService {
             lecternValidationResult.validationErrors.length > 0
         ) {
             singleFileValidationStatus.validationErrors.push(
-                lecternValidationResult.validationErrors.map((err) => new RecordValidationError(err))
+                ...lecternValidationResult.validationErrors.map((err) => new RecordValidationError(err))
             );
         }
 
