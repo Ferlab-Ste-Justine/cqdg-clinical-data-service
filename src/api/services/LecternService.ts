@@ -1,6 +1,5 @@
 import {
     entities as dictionaryEntities,
-    functions as dictionaryService,
     parallel,
 } from '@overturebio-stack/lectern-client';
 import { Service } from 'typedi';
@@ -76,42 +75,42 @@ export class LecternService {
         schemaName: string,
         records: ReadonlyArray<dictionaryEntities.DataRecord>,
         schemasDictionary?: dictionaryEntities.SchemasDictionary,
-        parallelize: boolean = true
+        indexOffset: number = 0
     ): Promise<dictionaryEntities.BatchProcessingResult> {
         if (!schemasDictionary) {
             throw new Error('No schemas provided.');
         }
 
         try {
-            if (parallelize) {
-                const batchProcessingResult: BatchProcessingResult = {
-                    validationErrors: [],
-                    processedRecords: [],
-                };
+            const batchProcessingResult: BatchProcessingResult = {
+                validationErrors: [],
+                processedRecords: [],
+            };
 
-                await Promise.all(
-                    records.map(async (record, index) => {
-                        const schemaProcessingResult: SchemaProcessingResult = await parallel.processRecord(
-                            schemasDictionary,
-                            schemaName,
-                            record,
-                            index
-                        );
-                        if (schemaProcessingResult.validationErrors) {
-                            batchProcessingResult.validationErrors.push(...schemaProcessingResult.validationErrors);
-                        }
-                        if (schemaProcessingResult.processedRecord) {
-                            batchProcessingResult.processedRecords.push(schemaProcessingResult.processedRecord);
-                        }
+            await Promise.all(
+                records.map(async (record, index) => {
 
-                        return undefined;
-                    })
-                );
+                    // rowIds => +2 because index starts at 0 and there is the header row
+                    const rowIdx = index + indexOffset + 2;
 
-                return batchProcessingResult;
-            } else {
-                return await dictionaryService.processRecords(schemasDictionary, schemaName, records);
-            }
+                    const schemaProcessingResult: SchemaProcessingResult = await parallel.processRecord(
+                        schemasDictionary,
+                        schemaName,
+                        record,
+                        rowIdx
+                    );
+                    if (schemaProcessingResult.validationErrors) {
+                        batchProcessingResult.validationErrors.push(...schemaProcessingResult.validationErrors);
+                    }
+                    if (schemaProcessingResult.processedRecord) {
+                        batchProcessingResult.processedRecords.push(schemaProcessingResult.processedRecord);
+                    }
+
+                    return undefined;
+                })
+            );
+
+            return batchProcessingResult;
         } catch (err) {
             this.log.error(err);
             throw err;

@@ -52,6 +52,8 @@ export class UploadController extends BaseController {
         },
     };
 
+    private static GLOBAL_VALIDATION_ERROR_THRESHOLD: number = 200;
+
     constructor(
         private studyService: StudyService,
         private lecternService: LecternService,
@@ -128,7 +130,8 @@ export class UploadController extends BaseController {
         const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
             file,
             schemas,
-            undefined
+            undefined,
+            UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD
         );
         report.files.push(singleFileValidationStatus);
 
@@ -219,41 +222,48 @@ export class UploadController extends BaseController {
         }
 
         const study: Study = await this.studyService.findOne(dataSubmission.studyId);
-        let hasErrors = false;
 
         report.files = [];
         report.errors = [];
 
+        let nbOfErrors = 0;
+
+        const maxErrorsPerFile = files.length > 0 ?
+            Math.ceil((UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD / files.length)) :
+            UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD;
+
         for (const f of files) {
-            this.log.debug(`Validating ${f.originalname}`);
-            const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
-                f,
-                schemas,
-                studyVersionId
-            );
+            if(nbOfErrors < UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD){
+                this.log.debug(`Validating ${f.originalname}`);
+                const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
+                    f,
+                    schemas,
+                    studyVersionId,
+                    maxErrorsPerFile
+                );
 
-            report.files.push(singleFileValidationStatus);
+                report.files.push(singleFileValidationStatus);
+                nbOfErrors += (singleFileValidationStatus.validationErrors || []).length;
 
-            hasErrors = hasErrors || singleFileValidationStatus.validationErrors.length > 0;
-
-            if (singleFileValidationStatus.validationErrors.length === 0) {
-                // N.B.: There will always be a dataSubmissionId here; thus, it will always update, not create.
-                this.storageService
-                    .store(
-                        `clinical-data/${study.createdBy}/${study.id}-${study.code}/${studyVersionId}/${f.originalname}`,
-                        f.buffer
-                    )
-                    .then((errors) => {
-                        if (errors && errors.length > 0) {
-                            report.errors.push(...errors);
-                        }
-                    });
+                if (singleFileValidationStatus.validationErrors.length === 0) {
+                    // N.B.: There will always be a dataSubmissionId here; thus, it will always update, not create.
+                    this.storageService
+                        .store(
+                            `clinical-data/${study.createdBy}/${study.id}-${study.code}/${studyVersionId}/${f.originalname}`,
+                            f.buffer
+                        )
+                        .then((errors) => {
+                            if (errors && errors.length > 0) {
+                                report.errors.push(...errors);
+                            }
+                        });
+                }
             }
         }
 
         this.log.debug(JSON.stringify(report));
 
-        if (hasErrors) {
+        if (nbOfErrors > 0) {
             response.status(400);
         }
         return report;

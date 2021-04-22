@@ -188,7 +188,8 @@ export class ValidationService {
     public async validateFile(
         file: Express.Multer.File,
         schemas: dictionaryEntities.SchemasDictionary,
-        dataSubmissionId: number
+        dataSubmissionId: number,
+        errorTreshold: number
     ): Promise<SingleFileValidationStatus> {
         const schemaForCurrentFile = await selectSchema(file.originalname, schemas);
 
@@ -198,13 +199,44 @@ export class ValidationService {
             skipEmptyLines: true,
         }).data;
 
-        return await this.validateFileEntries(
-            dataSubmissionId,
-            schemaForCurrentFile,
-            file.originalname,
-            entries,
-            schemas
-        );
+        const chunkSize = 10;
+        const chunks: any[] = entries.reduce((acc, e, i) => (i % chunkSize ? acc[acc.length - 1].push(e) : acc.push([e]), acc), []);
+        const results: SingleFileValidationStatus[] = [];
+
+        let nbOfErrors = 0;
+        let indexOffset = 0;
+
+        for (const chunk of chunks) {
+            if (nbOfErrors < errorTreshold) {
+                const chunkValidationStatus: SingleFileValidationStatus = await this.validateFileEntries(
+                    dataSubmissionId,
+                    schemaForCurrentFile,
+                    file.originalname,
+                    chunk,
+                    schemas,
+                    indexOffset
+                );
+
+                results.push(chunkValidationStatus);
+
+                indexOffset += chunk.length;
+                nbOfErrors += (chunkValidationStatus.validationErrors || []).length;
+            }
+        }
+
+        const accumulator = new SingleFileValidationStatus();
+        accumulator.processedRecords = [];
+        accumulator.validationErrors = [];
+
+        const reducer = (acc: SingleFileValidationStatus, item: SingleFileValidationStatus) => {
+            acc.validationErrors.push(...item.validationErrors);
+            acc.processedRecords.push(...item.processedRecords);
+            acc.filename = item.filename;
+            acc.schemaName = item.schemaName;
+            return acc;
+        };
+
+        return results.reduce(reducer, accumulator);
     }
 
     public async validateFileEntries(
@@ -212,7 +244,8 @@ export class ValidationService {
         schemaForCurrentFile: string,
         filename: string,
         entries: any[],
-        schemas: dictionaryEntities.SchemasDictionary
+        schemas: dictionaryEntities.SchemasDictionary,
+        indexOffset: number = 0
     ): Promise<SingleFileValidationStatus> {
         const singleFileValidationStatus: SingleFileValidationStatus = new SingleFileValidationStatus();
         singleFileValidationStatus.filename = filename;
@@ -222,14 +255,16 @@ export class ValidationService {
         const lecternValidation: Promise<BatchProcessingResult> = this.lecternService.validateRecords(
             schemaForCurrentFile,
             entries,
-            schemas
+            schemas,
+            indexOffset
         );
         let unregisteredDataValidation: Promise<RecordValidationError[]> = Promise.resolve([]);
 
         if (dataSubmissionId) {
             unregisteredDataValidation = this.sampleRegistrationService.validateAgainstRegisteredSamples(
                 entries,
-                dataSubmissionId
+                dataSubmissionId,
+                indexOffset
             );
         }
 

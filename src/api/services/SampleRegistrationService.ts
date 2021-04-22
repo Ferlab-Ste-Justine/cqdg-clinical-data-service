@@ -56,7 +56,8 @@ export class SampleRegistrationService {
 
     public async validateAgainstRegisteredSamples(
         entries: any[],
-        dataSubmissionId: number
+        dataSubmissionId: number,
+        indexOffset: number = 0
     ): Promise<RecordValidationError[]> {
         const errors: RecordValidationError[] = [];
         const entryKeys = entries ? Object.keys(entries[0]) : undefined;
@@ -90,7 +91,7 @@ export class SampleRegistrationService {
                     error.message = `No sample registered for : [${intersection
                         .map((key) => `${key}: ${entries[i][key]}`)
                         .join(', ')}]`;
-                    error.index = i + 1;
+                    error.index = i + indexOffset + 2;
 
                     errors.push(error);
                 }
