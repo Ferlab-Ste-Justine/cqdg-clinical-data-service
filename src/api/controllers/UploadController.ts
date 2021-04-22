@@ -52,7 +52,7 @@ export class UploadController extends BaseController {
         },
     };
 
-    private static GLOBAL_VALIDATION_ERROR_THRESHOLD: number = 200;
+    private static GLOBAL_VALIDATION_ERROR_THRESHOLD = 200;
 
     constructor(
         private studyService: StudyService,
@@ -233,7 +233,7 @@ export class UploadController extends BaseController {
             UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD;
 
         for (const f of files) {
-            if(nbOfErrors < UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD){
+            if (nbOfErrors < UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD) {
                 this.log.debug(`Validating ${f.originalname}`);
                 const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
                     f,

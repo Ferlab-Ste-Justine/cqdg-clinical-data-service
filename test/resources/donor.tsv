@@ -1,10 +1,9 @@
-submitter_donor_id	dob	date_of_recruitement	gender	ethnicity	vital_status	cause_of_death	age_of_death	physical_measures_available	laboratory_measures_available	lifestyle_available	medication_available	environment_exposure_available	family_history_available	genealogy_available	is_a_proband	is_affected
-PT00001	6/9/1946	11/22/2009	Male	French Canadian 	alive			YES	NO	YES	YES	NO	YES	NO	Not applicable	Not applicable
-PT00002	3/9/1952	1/9/2009	Female	French Canadian 	alive			YES	NO	YES	YES	NO	NO	YES	Not applicable	Not applicable
-PT00003	5/3/1966	8/24/2008	Female	French Canadian 	alive			YES	NO	YES	YES	NO	NO	NO	Not applicable	Not applicable
-PT00004	6/24/1955	6/14/2009	Male	French Canadian 	alive			YES	NO	YES	YES	NO	NO	YES	Not applicable	Not applicable
-PT00005	8/9/1969	6/25/2009	Male	French Canadian 	alive			YES	NO	YES	NO	NO	NO	NO	Not applicable	Not applicable
-PT00006	5/23/1942	9/11/2008	Male	French Canadian 	alive			YES	NO	YES	NO	NO	NO	YES	Not applicable	Not applicable
-PT00007	4/23/1966	7/5/2009	Female	East and Southeast Asian	alive			YES	NO	YES	NO	NO	YES	NO	Not applicable	Not applicable
-PT00008	11/9/1952	8/7/2009	Female	French Canadian 	alive			YES	NO	YES	NO	YES	YES	YES	Not applicable	Not applicable
-PT00019	2/3/1950	10/8/2009	Unknown	French Canadian 	deceased	Chronic lower respiratory disease	24820	YES	NO	YES	YES	YES	YES	YES	Not applicable	Not applicable
+study_id	submitter_donor_id	dob	date_of_recruitment	gender	ethnicity	vital_status	cause_of_death	age_of_death	physical_measures_available	laboratory_measures_available	lifestyle_available	medication_available	environment_exposure_available	family_history_available	genealogy_available	is_a_proband	is_affected
+ST0001	PT00001	6/9/1946	11/22/2009	Male	French Canadian	alive			TRUE	FALSE	TRUE	TRUE	FALSE	TRUE	FALSE	Not applicable	Not applicable
+ST0001	PT00002	3/9/1952	1/9/2009	Female	French Canadian	alive			TRUE	FALSE	TRUE	TRUE	FALSE	FALSE	TRUE	Not applicable	Not applicable
+ST0001	PT00003	5/3/1966	8/24/2008	Female	French Canadian	alive			TRUE	FALSE	TRUE	TRUE	FALSE	FALSE	FALSE	Not applicable	Not applicable
+ST0001	PT00004	6/24/1955	6/14/2009	Male	French Canadian	alive			TRUE	FALSE	TRUE	TRUE	FALSE	FALSE	TRUE	Not applicable	Not applicable
+ST0001	PT00005	8/9/1969	6/25/2009	Male	French Canadian	alive			TRUE	FALSE	TRUE	FALSE	FALSE	FALSE	FALSE	Not applicable	Not applicable
+ST0001	PT00006	5/23/1942	9/11/2008	Male	French Canadian	alive			TRUE	FALSE	TRUE	FALSE	FALSE	FALSE	TRUE	Not applicable	Not applicable
+ST0001	PT00007	4/23/1966	7/5/2009	Female	French Canadian	alive			TRUE	FALSE	TRUE	FALSE	FALSE	TRUE	FALSE	Not applicable	Not applicable
+ST0001	PT00008	11/9/1952	8/7/2009	Female	French Canadian	alive			TRUE	FALSE	TRUE	FALSE	TRUE	TRUE	TRUE	Not applicable	Not applicable
