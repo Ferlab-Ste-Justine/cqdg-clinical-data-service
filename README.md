@@ -33,13 +33,13 @@ You need to set up your development environment before you can do anything.
 
 - Install Python (required for sqlite build)
 
-- Launch PostgreSQL -> ./docker/launch.sh
+- Launch the infrastructure : npm run launch
 
 ### Step 2: Create new Project
 
 Copy the `.env.example` file and rename it to `.env`. In this file you have to add your database connection information.
 
-Create a new database with the name you have in your `.env`-file.
+Create a new database with the name you have in your `.env`-file, if you changed it from the original.
 
 Then setup your application environment.
 

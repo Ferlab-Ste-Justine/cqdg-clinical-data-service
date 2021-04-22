@@ -4,11 +4,13 @@
   "description": "Clinical data service for submission and validation",
   "main": "src/app.ts",
   "scripts": {
+    "launch": "nps launch",
     "start": "nps",
-    "test": "npm start test",
-    "build": "npm start build",
+    "test": "nps test",
+    "build": "nps build",
     "presetup": "npm install",
-    "setup": "npm start config && npm start setup.script"
+    "migrate": "nps db.setup",
+    "setup": "nps config && nps setup.script"
   },
   "engines": {
     "node": ">=8.0.0"
