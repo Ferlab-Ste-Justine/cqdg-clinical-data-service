@@ -10,6 +10,13 @@ module.exports = {
         /**
          * Starts the builded app from the dist directory.
          */
+        launch: {
+            script: '(cd ./docker; ./launch.sh)',
+            description: 'Starts all the service',
+        },
+        /**
+         * Starts the builded app from the dist directory.
+         */
         start: {
             script: 'cross-env NODE_ENV=production node dist/app.js',
             description: 'Starts the builded app',
@@ -225,6 +232,7 @@ module.exports = {
          * This creates pretty banner to the terminal
          */
         banner: {
+            launch: banner('launch'),
             build: banner('build'),
             serve: banner('serve'),
             testUnit: banner('test.unit'),
