@@ -129,9 +129,9 @@ export class ValidationService {
         report.globalValidationErrors.push(
             ...(await this.findOrphans(
                 dataframes[CQDGDictionaryEntities.DONOR],
-                dataframes[CQDGDictionaryEntities.FAMILY_RELATIONSHIP],
+                dataframes[CQDGDictionaryEntities.FAMILY],
                 'submitter_family_id',
-                CQDGDictionaryEntities.FAMILY_RELATIONSHIP
+                CQDGDictionaryEntities.FAMILY
             ))
         );
         report.globalValidationErrors.push(
@@ -164,7 +164,7 @@ export class ValidationService {
             const donorsWithDeps = loadDonors(
                 dataframes[CQDGDictionaryEntities.DONOR],
                 biospecimenWithDeps,
-                dataframes[CQDGDictionaryEntities.FAMILY_RELATIONSHIP],
+                dataframes[CQDGDictionaryEntities.FAMILY],
                 dataframes[CQDGDictionaryEntities.FAMILY_HISTORY],
                 dataframes[CQDGDictionaryEntities.EXPOSURE],
                 diagnosesWithDeps
