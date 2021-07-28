@@ -72,7 +72,7 @@ export const loadDonors = (
               .groupBy((row) => row.submitter_family_id)
               .select((group) => {
                   return struct(
-                      'family_relationships',
+                      'family',
                       Object.keys(familyRelationships.first()).filter((key) => !['study_id', 'gender'].includes(key)),
                       'submitter_family_id',
                       group

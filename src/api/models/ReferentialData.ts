@@ -12,7 +12,7 @@ export enum CQDGDictionaryEntities {
     DONOR = 'donor',
     EXPOSURE = 'exposure',
     FAMILY_HISTORY = 'family_history',
-    FAMILY_RELATIONSHIP = 'family_relationship',
+    FAMILY = 'family',
     FOLLOW_UP = 'follow_up',
     PHENOTYPE = 'phenotype',
     SAMPLE_REGISTRATION = 'sample_registration',
