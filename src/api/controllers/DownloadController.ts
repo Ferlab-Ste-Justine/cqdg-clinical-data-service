@@ -69,7 +69,7 @@ export class DownloadController extends BaseController {
         // Sort json per entity type
         const accumulator: { [key: string]: any } = {};
         this.processObjectArray('files', files, accumulator);
-        this.log.debug(JSON.stringify(accumulator, undefined, 2));
+        // this.log.debug(JSON.stringify(accumulator, undefined, 2));
 
         // Convert each entity list into a TSV file
         // Then zip all TSV into a single archive.
@@ -108,12 +108,11 @@ export class DownloadController extends BaseController {
         if (!accumulator[name]) {
             accumulator[name] = [];
         }
-
         accumulator[name].push(
             ...objects.map((obj) => {
                 const clone = {};
 
-                Object.keys(obj).forEach((key) => {
+                Object.keys(obj || {}).forEach((key) => {
                     if (!Array.isArray(obj[key])) {
                         clone[key] = obj[key];
                     } else {
