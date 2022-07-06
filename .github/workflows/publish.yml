@@ -12,11 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Push the image on the docker registry
-        uses: Ferlab-Ste-Justine/action-push-image@master
+        uses: Ferlab-Ste-Justine/action-push-image@v2
         with:
           username: ${{ secrets.FERLAB_DOCKER_HUB_USER }}
           password: ${{ secrets.FERLAB_DOCKER_HUB_TOKEN }}
           image: ferlabcrsj/cqdg-clinical-data-service
-          tag_source: sha
-          location: .
-          dockerfile: Dockerfile
+          tag_format: "{sha}-{timestamp}"
