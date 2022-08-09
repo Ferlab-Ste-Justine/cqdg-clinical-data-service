@@ -1,4 +1,4 @@
-submitter_treatment_id	submitter_donor_id	study_id	submitter_diagnosis_id	treatment_type	diagnosis_ICD_term	treatment_is_primary	treatment_intent	treatment_response	medication_name	medication_code	medication_class	medication_start_date	medication_end_date
-TX00001	PT00001	ST0001	DI00001	Surgery	Acute myocardial infarction	Yes	Curative	Not applicable					
-TX00002	PT00002	ST0001	DI00002	Other targeting molecular therapy	 Multiple myeloma	Yes	Life extending	Disease Progression					
-TX00002	PT00002	ST0001	DI22222	ORPHAN	ORPHAN	Yes	ORPHAN	ORPHAN					
+submitter_treatment_id	submitter_participant_id	study_id	submitter_diagnosis_id	treatment_type	diagnosis_ICD_term	treatment_is_primary	treatment_intent	treatment_response	medication_name	medication_code	medication_class	medication_start_date	medication_end_date
+TX00001	PT00001	ST0001	DI00001	Surgery	Acute myocardial infarction	Yes	Curative	Not applicable
+TX00002	PT00002	ST0001	DI00002	Other targeting molecular therapy	 Multiple myeloma	Yes	Life extending	Disease Progression
+TX00002	PT00002	ST0001	DI22222	ORPHAN	ORPHAN	Yes	ORPHAN	ORPHAN

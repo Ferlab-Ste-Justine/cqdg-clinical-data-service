@@ -14,9 +14,9 @@ export class SampleRegistration {
     public studyId: string;
 
     @Field({
-        description: 'Unique identifier of the donor, assigned by the data provider.',
+        description: 'Unique identifier of the participant, assigned by the data provider.',
     })
-    public submitterDonorId: string;
+    public submitterParticipantId: string;
 
     @Field({
         description: 'Unique identifier of the biospecimen, assigned by the data provider.',
@@ -50,6 +50,6 @@ export class SampleRegistration {
         this.submitterBiospecimenId = json.submitterBiospecimenId || undefined;
         this.submitterSampleId = json.submitterSampleId || undefined;
         this.sampleType = json.sampleType || undefined;
-        this.submitterDonorId = json.submitterDonorId || undefined;
+        this.submitterParticipantId = json.submitterParticipantId || undefined;
     }
 }

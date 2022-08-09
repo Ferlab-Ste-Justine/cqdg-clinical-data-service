@@ -29,10 +29,10 @@ export class SampleRegistration {
 
     @IsNotEmpty()
     @Column({
-        name: 'submitter_donor_id',
+        name: 'submitter_participant_id',
         nullable: false,
     })
-    public submitterDonorId: string;
+    public submitterParticipantId: string;
 
     @IsNotEmpty()
     @Column({
@@ -58,7 +58,7 @@ export class SampleRegistration {
     constructor(json: any = {}) {
         this.id = json.id || undefined;
         this.studyId = json.study_id || undefined;
-        this.submitterDonorId = json.submitter_donor_id || undefined;
+        this.submitterParticipantId = json.submitter_participant_id || undefined;
         this.submitterBiospecimenId = json.submitter_biospecimen_id || undefined;
         this.submitterSampleId = json.submitter_sample_id || undefined;
         this.sampleType = json.sample_type || undefined;

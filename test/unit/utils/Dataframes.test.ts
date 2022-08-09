@@ -1,13 +1,13 @@
 import * as dataForge from 'data-forge';
 import path from 'path';
 import fs from 'fs';
-import { loadBiospecimens, loadDiagnoses, loadDonors, loadStudies } from '../../../src/api/dataframeUtils';
+import { loadBiospecimens, loadDiagnoses, loadParticipants, loadStudies } from '../../../src/api/dataframeUtils';
 
 describe('Select, join, group, aggregate', () => {
     test('Load studies with all dependencies', async (done) => {
         // Load CSVs
         const studyCSV = fs.readFileSync(path.resolve(__dirname, '../../resources/dataframes/study.csv'));
-        const donorCSV = fs.readFileSync(path.resolve(__dirname, '../../resources/dataframes/donor.csv'));
+        const participantCSV = fs.readFileSync(path.resolve(__dirname, '../../resources/dataframes/participant.csv'));
         const familyHistoryCSV = fs.readFileSync(
             path.resolve(__dirname, '../../resources/dataframes/family-history.csv')
         );
@@ -25,7 +25,7 @@ describe('Select, join, group, aggregate', () => {
 
         // Load CSV into Dataframes
         const studies = dataForge.fromCSV(studyCSV.toString('utf-8'));
-        const donors = dataForge.fromCSV(donorCSV.toString('utf-8'));
+        const participants = dataForge.fromCSV(participantCSV.toString('utf-8'));
         const familyHistories = dataForge.fromCSV(familyHistoryCSV.toString('utf-8'));
         const familyRelationships = dataForge.fromCSV(familyRelationshipCSV.toString('utf-8'));
         const exposures = dataForge.fromCSV(exposureCSV.toString('utf-8'));
@@ -38,8 +38,8 @@ describe('Select, join, group, aggregate', () => {
         // Join dependencies
         const biospecimenWithDeps = loadBiospecimens(biospecimen, samples);
         const diagnosesWithDeps = loadDiagnoses(diagnoses, treatments, followups);
-        const donorsWithDeps = loadDonors(
-            donors,
+        const participantsWithDeps = loadParticipants(
+            participants,
             biospecimenWithDeps,
             familyRelationships,
             familyHistories,
@@ -48,7 +48,7 @@ describe('Select, join, group, aggregate', () => {
         );
 
         // Assemble study
-        const df = loadStudies(studies, donorsWithDeps);
+        const df = loadStudies(studies, participantsWithDeps);
         const studiesWithDeps = df.toJSON();
 
         // TODO: validations on studiesWithDeps

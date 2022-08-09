@@ -19,7 +19,7 @@ export class DataSubmissionResolver {
     //         registeredSamples{
     //             id
     //             studyId
-    //             submitterDonorId
+    //             submitterParticipantId
     //             submitterBiospecimenId
     //             submitterSampleId
     //             sampleType
@@ -40,7 +40,7 @@ export class DataSubmissionResolver {
     //         registeredSamples{
     //             id
     //             studyId
-    //             submitterDonorId
+    //             submitterParticipantId
     //             submitterBiospecimenId
     //             submitterSampleId
     //             sampleType

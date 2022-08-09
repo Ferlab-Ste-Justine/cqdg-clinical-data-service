@@ -49,7 +49,7 @@ describe('DataSubmissionService', () => {
         uploadReport.files = [];
 
         const reportFile1: SingleFileValidationStatus = new SingleFileValidationStatus();
-        reportFile1.filename = 'donors.tsv';
+        reportFile1.filename = 'participants.tsv';
         reportFile1.validationErrors = [];
 
         const reportFile2: SingleFileValidationStatus = new SingleFileValidationStatus();
@@ -67,9 +67,9 @@ describe('DataSubmissionService', () => {
             },
         });
 
-        const donorValidationError: RecordValidationError = new RecordValidationError({
+        const participantValidationError: RecordValidationError = new RecordValidationError({
             errorType: 'INVALID_BY_REGEX',
-            fieldName: 'submitter_donor_id',
+            fieldName: 'submitter_participant_id',
             message:
                 "The value is not a permissible for this field, it must meet the regular expression: '^[C][0-9]{2}(.[0-9]{1})?$'. Examples: C50.1,C18",
             info: {
@@ -79,7 +79,7 @@ describe('DataSubmissionService', () => {
         });
 
         reportFile1.validationErrors.push(biospecimenValidationError);
-        reportFile2.validationErrors.push(donorValidationError);
+        reportFile2.validationErrors.push(participantValidationError);
 
         uploadReport.files.push(reportFile1);
         uploadReport.files.push(reportFile2);
@@ -138,7 +138,7 @@ describe('DataSubmissionService', () => {
 
         const sample1: SampleRegistration = new SampleRegistration({
             study_id: 'ST0001',
-            submitter_donor_id: 'PT0001',
+            submitter_participant_id: 'PT0001',
             submitter_biospecimen_id: 'BS0001',
             submitter_sample_id: 'SM0001',
             sample_type: 'Total DNA',
@@ -146,7 +146,7 @@ describe('DataSubmissionService', () => {
 
         const sample2: SampleRegistration = new SampleRegistration({
             study_id: 'ST0001',
-            submitter_donor_id: 'PT0001',
+            submitter_participant_id: 'PT0001',
             submitter_biospecimen_id: 'BS0002',
             submitter_sample_id: 'SM0002',
             sample_type: 'Total DNA',

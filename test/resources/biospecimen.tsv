@@ -1,4 +1,4 @@
-study_id	submitter_donor_id	submitter_biospecimen_id	submitter_diagnosis_id	date_biospecimen_collection	tumour_normal_designation	biospecimen_tissue_source	biospecimen_type	biospecimen_anatomic_location	tumour_histological_type	biospecimen_processing	biospecimen_storage	biospecimen_access
+study_id	submitter_participant_id	submitter_biospecimen_id	submitter_diagnosis_id	date_biospecimen_collection	tumour_normal_designation	biospecimen_tissue_source	biospecimen_type	biospecimen_anatomic_location	tumour_histological_type	biospecimen_processing	biospecimen_storage	biospecimen_access
 ST0001	PT00001	BS00001	DI00001	11/22/2009	Normal	Blood derived - peripheral blood	Normal	C42.0		Cryopreservation - other	Frozen in -70 freezer	TRUE
 ST0001	PT00002	BS00002	DI00002	1/9/2009	Normal	Blood derived - peripheral blood	Normal	C42.0	9732/3	Cryopreservation - other	Frozen in -70 freezer	TRUE
 ST0001	PT00003	BS00003	DI00003	8/24/2008	Normal	Blood derived - peripheral blood	Normal	C42.0		Cryopreservation - other	Frozen in -70 freezer	TRUE

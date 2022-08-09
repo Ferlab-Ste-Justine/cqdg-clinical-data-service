@@ -4,34 +4,34 @@
             "all": [
                 {
                     "fact": "study",
-                    "path": "$.donors.length",
+                    "path": "$.participants.length",
                     "operator": "greaterThan",
                     "value": "0"
                 }
             ]
         },
         "event": {
-            "type": "donors-not-found"
+            "type": "participants-not-found"
         },
-        "name": "validate-has-donors"
+        "name": "validate-has-participants"
     },
     {
         "conditions": {
             "all": [
                 {
                     "fact": "study",
-                    "path": "$.donors[*].dob",
+                    "path": "$.participants[*].dob",
                     "operator": "dateIsNotAfter",
                     "value": {
                         "fact": "study",
-                        "path": "$.donors[*].date_of_recruitement"
+                        "path": "$.participants[*].date_of_recruitement"
                     }
                 }
             ]
         },
         "event": {
-            "type": "donors-born-after-recruitment-date"
+            "type": "participants-born-after-recruitment-date"
         },
-        "name": "validate-donors-born-before-recruitment-date"
+        "name": "validate-participants-born-before-recruitment-date"
     }
 ]

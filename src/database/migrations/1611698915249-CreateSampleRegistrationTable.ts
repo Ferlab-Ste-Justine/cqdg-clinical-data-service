@@ -21,7 +21,7 @@ export class CreateSampleRegistrationTable1611698915249 implements MigrationInte
                     isNullable: false,
                 },
                 {
-                    name: 'submitter_donor_id',
+                    name: 'submitter_participant_id',
                     type: 'varchar',
                     length: '255',
                     isPrimary: false,
