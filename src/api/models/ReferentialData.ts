@@ -1,6 +1,6 @@
 export enum SampleRegistrationFieldsEnum {
     study_id = 'studyId',
-    submitter_donor_id = 'submitterDonorId',
+    submitter_participant_id = 'submitterParticipantId',
     submitter_biospecimen_id = 'submitterBiospecimenId',
     submitter_sample_id = 'submitterSampleId',
     sample_type = 'sampleType',
@@ -9,7 +9,7 @@ export enum SampleRegistrationFieldsEnum {
 export enum CQDGDictionaryEntities {
     BIOSPECIMEN = 'biospecimen',
     DIAGNOSIS = 'diagnosis',
-    DONOR = 'donor',
+    PARTICIPANT = 'participant',
     EXPOSURE = 'exposure',
     FAMILY_HISTORY = 'family_history',
     FAMILY = 'family',

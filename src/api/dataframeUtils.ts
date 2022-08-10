@@ -1,10 +1,10 @@
 import { IDataFrame } from 'data-forge';
 import { isEmptyOrSpaces } from './utils';
 
-export const loadStudies = (studies: IDataFrame, donors: IDataFrame): IDataFrame => {
+export const loadStudies = (studies: IDataFrame, participants: IDataFrame): IDataFrame => {
     return studies
         .joinOuterLeft(
-            donors,
+            participants,
             (left) => left.study_id,
             (right) => right.study_id,
             (left, right) => {
@@ -16,13 +16,13 @@ export const loadStudies = (studies: IDataFrame, donors: IDataFrame): IDataFrame
         )
         .groupBy((row) => row.study_id)
         .select((group) => {
-            return struct('donors', Object.keys(donors.first()), 'submitter_donor_id', group);
+            return struct('participants', Object.keys(participants.first()), 'submitter_participant_id', group);
         })
         .inflate();
 };
 
-export const loadDonors = (
-    donors: IDataFrame,
+export const loadParticipants = (
+    participants: IDataFrame,
     biospecimens: IDataFrame,
     familyRelationships: IDataFrame,
     familyHistories: IDataFrame,
@@ -30,11 +30,11 @@ export const loadDonors = (
     diagnoses: IDataFrame
 ): IDataFrame => {
     const join1 = biospecimens
-        ? donors
+        ? participants
               .joinOuterLeft(
                   biospecimens,
-                  (left) => left.submitter_donor_id,
-                  (right) => right.submitter_donor_id,
+                  (left) => left.submitter_participant_id,
+                  (right) => right.submitter_participant_id,
                   (left, right) => {
                       return {
                           ...left,
@@ -42,19 +42,19 @@ export const loadDonors = (
                       };
                   }
               )
-              .groupBy((row) => row.submitter_donor_id)
+              .groupBy((row) => row.submitter_participant_id)
               .select((group) => {
                   return struct(
                       'biospecimens',
                       Object.keys(biospecimens.first()).filter(
-                          (key) => !['study_id', 'submitter_donor_id'].includes(key)
+                          (key) => !['study_id', 'submitter_participant_id'].includes(key)
                       ),
                       'submitter_biospecimen_id',
                       group
                   );
               })
               .inflate()
-        : donors;
+        : participants;
 
     const join2 = familyRelationships
         ? join1
@@ -85,8 +85,8 @@ export const loadDonors = (
         ? join2
               .joinOuterLeft(
                   familyHistories,
-                  (left) => left.submitter_donor_id,
-                  (right) => right.submitter_donor_id,
+                  (left) => left.submitter_participant_id,
+                  (right) => right.submitter_participant_id,
                   (left, right) => {
                       return {
                           ...left,
@@ -94,12 +94,12 @@ export const loadDonors = (
                       };
                   }
               )
-              .groupBy((row) => row.submitter_donor_id)
+              .groupBy((row) => row.submitter_participant_id)
               .select((group) => {
                   return struct(
                       'family_history',
                       Object.keys(familyHistories.first()).filter(
-                          (key) => !['study_id', 'submitter_donor_id'].includes(key)
+                          (key) => !['study_id', 'submitter_participant_id'].includes(key)
                       ),
                       'submitter_family_condition_id',
                       group
@@ -112,8 +112,8 @@ export const loadDonors = (
         ? join3
               .joinOuterLeft(
                   exposures,
-                  (left) => left.submitter_donor_id,
-                  (right) => right.submitter_donor_id,
+                  (left) => left.submitter_participant_id,
+                  (right) => right.submitter_participant_id,
                   (left, right) => {
                       return {
                           ...left,
@@ -121,11 +121,11 @@ export const loadDonors = (
                       };
                   }
               )
-              .groupBy((row) => row.submitter_donor_id)
+              .groupBy((row) => row.submitter_participant_id)
               .select((group) => {
                   return struct(
                       'exposures',
-                      Object.keys(exposures.first()).filter((key) => !['study_id', 'submitter_donor_id'].includes(key)),
+                      Object.keys(exposures.first()).filter((key) => !['study_id', 'submitter_participant_id'].includes(key)),
                       'smoking_status',
                       group
                   );
@@ -137,8 +137,8 @@ export const loadDonors = (
         ? join4
               .joinOuterLeft(
                   diagnoses,
-                  (left) => left.submitter_donor_id,
-                  (right) => right.submitter_donor_id,
+                  (left) => left.submitter_participant_id,
+                  (right) => right.submitter_participant_id,
                   (left, right) => {
                       return {
                           ...left,
@@ -146,11 +146,11 @@ export const loadDonors = (
                       };
                   }
               )
-              .groupBy((row) => row.submitter_donor_id)
+              .groupBy((row) => row.submitter_participant_id)
               .select((group) => {
                   return struct(
                       'diagnoses',
-                      Object.keys(diagnoses.first()).filter((key) => !['study_id', 'submitter_donor_id'].includes(key)),
+                      Object.keys(diagnoses.first()).filter((key) => !['study_id', 'submitter_participant_id'].includes(key)),
                       'submitter_diagnosis_id',
                       group
                   );
@@ -204,7 +204,7 @@ export const loadDiagnoses = (diagnoses: IDataFrame, treatments: IDataFrame, fol
                   return struct(
                       'treatments',
                       Object.keys(treatments.first()).filter(
-                          (key) => !['study_id', 'submitter_donor_id', 'submitter_diagnosis_id'].includes(key)
+                          (key) => !['study_id', 'submitter_participant_id', 'submitter_diagnosis_id'].includes(key)
                       ),
                       'submitter_treatment_id',
                       group
@@ -232,7 +232,7 @@ export const loadDiagnoses = (diagnoses: IDataFrame, treatments: IDataFrame, fol
                   return struct(
                       'follow_ups',
                       Object.keys(followups.first()).filter(
-                          (key) => !['study_id', 'submitter_donor_id', 'submitter_diagnosis_id'].includes(key)
+                          (key) => !['study_id', 'submitter_participant_id', 'submitter_diagnosis_id'].includes(key)
                       ),
                       'submitter_follow-up_id',
                       group

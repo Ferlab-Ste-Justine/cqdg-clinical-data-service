@@ -10,7 +10,7 @@ import { env } from '../../env';
 import { MemoryStorage } from 'node-ts-cache-storage-memory';
 import { CQDGDictionaryEntities } from '../models/ReferentialData';
 import { selectSchema } from '../utils';
-import { loadBiospecimens, loadDiagnoses, loadDonors, loadStudies } from '../dataframeUtils';
+import { loadBiospecimens, loadDiagnoses, loadParticipants, loadStudies } from '../dataframeUtils';
 import { ValidationReport } from '../controllers/responses/ValidationReport';
 import { RecordValidationError } from '../controllers/responses/RecordValidationError';
 import {
@@ -112,23 +112,23 @@ export class ValidationService {
         );
         report.globalValidationErrors.push(
             ...(await this.findOrphans(
-                dataframes[CQDGDictionaryEntities.DONOR],
+                dataframes[CQDGDictionaryEntities.PARTICIPANT],
                 dataframes[CQDGDictionaryEntities.BIOSPECIMEN],
-                'submitter_donor_id',
+                'submitter_participant_id',
                 CQDGDictionaryEntities.BIOSPECIMEN
             ))
         );
         report.globalValidationErrors.push(
             ...(await this.findOrphans(
-                dataframes[CQDGDictionaryEntities.DONOR],
+                dataframes[CQDGDictionaryEntities.PARTICIPANT],
                 dataframes[CQDGDictionaryEntities.DIAGNOSIS],
-                'submitter_donor_id',
+                'submitter_participant_id',
                 CQDGDictionaryEntities.DIAGNOSIS
             ))
         );
         report.globalValidationErrors.push(
             ...(await this.findOrphans(
-                dataframes[CQDGDictionaryEntities.DONOR],
+                dataframes[CQDGDictionaryEntities.PARTICIPANT],
                 dataframes[CQDGDictionaryEntities.FAMILY],
                 'submitter_family_id',
                 CQDGDictionaryEntities.FAMILY
@@ -136,17 +136,17 @@ export class ValidationService {
         );
         report.globalValidationErrors.push(
             ...(await this.findOrphans(
-                dataframes[CQDGDictionaryEntities.DONOR],
+                dataframes[CQDGDictionaryEntities.PARTICIPANT],
                 dataframes[CQDGDictionaryEntities.FAMILY_HISTORY],
-                'submitter_donor_id',
+                'submitter_participant_id',
                 CQDGDictionaryEntities.FAMILY_HISTORY
             ))
         );
         report.globalValidationErrors.push(
             ...(await this.findOrphans(
-                dataframes[CQDGDictionaryEntities.DONOR],
+                dataframes[CQDGDictionaryEntities.PARTICIPANT],
                 dataframes[CQDGDictionaryEntities.EXPOSURE],
-                'submitter_donor_id',
+                'submitter_participant_id',
                 CQDGDictionaryEntities.EXPOSURE
             ))
         );
@@ -161,8 +161,8 @@ export class ValidationService {
                 dataframes[CQDGDictionaryEntities.TREATMENT],
                 dataframes[CQDGDictionaryEntities.FOLLOW_UP]
             );
-            const donorsWithDeps = loadDonors(
-                dataframes[CQDGDictionaryEntities.DONOR],
+            const participantsWithDeps = loadParticipants(
+                dataframes[CQDGDictionaryEntities.PARTICIPANT],
                 biospecimenWithDeps,
                 dataframes[CQDGDictionaryEntities.FAMILY],
                 dataframes[CQDGDictionaryEntities.FAMILY_HISTORY],
@@ -170,7 +170,7 @@ export class ValidationService {
                 diagnosesWithDeps
             );
 
-            const studies = loadStudies(dataframes[CQDGDictionaryEntities.STUDY], donorsWithDeps).toArray();
+            const studies = loadStudies(dataframes[CQDGDictionaryEntities.STUDY], participantsWithDeps).toArray();
             const facts = [];
 
             for (const st of studies) {
@@ -368,7 +368,7 @@ export class ValidationService {
         return (
             includesAll(keys, [
                 CQDGDictionaryEntities.STUDY,
-                CQDGDictionaryEntities.DONOR,
+                CQDGDictionaryEntities.PARTICIPANT,
                 CQDGDictionaryEntities.BIOSPECIMEN,
             ]) &&
             (keys.includes(CQDGDictionaryEntities.PHENOTYPE) || keys.includes(CQDGDictionaryEntities.DIAGNOSIS))

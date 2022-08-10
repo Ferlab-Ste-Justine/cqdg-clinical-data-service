@@ -98,7 +98,7 @@ describe('/api', () => {
     /*test.skip('POST: /api/submission/${dataSubmissionId}/clinical-data should return validation errors - axios example', async (done) => {
         const form = new FormData();
         form.append('files', fs.createReadStream(path.resolve(__dirname, '../../resources/biospecimen.tsv')));
-        form.append('files', fs.createReadStream(path.resolve(__dirname, '../../resources/donor.tsv')));
+        form.append('files', fs.createReadStream(path.resolve(__dirname, '../../resources/participant.tsv')));
 
         axios
             .post(`http://localhost:${env.app.port}/api/submission/${dataSubmissionId}/clinical-data`, form, {
@@ -123,7 +123,7 @@ describe('/api', () => {
             .set('Accept-Language', 'en')
             .set('Authorization', `Bearer ${authToken}`)
             .attach('files', fs.createReadStream(path.resolve(__dirname, '../../resources/biospecimen.tsv')))
-            .attach('files', fs.createReadStream(path.resolve(__dirname, '../../resources/donor.tsv')))
+            .attach('files', fs.createReadStream(path.resolve(__dirname, '../../resources/participant.tsv')))
             .expect(400)
             .expect('Content-Type', /json/);
 

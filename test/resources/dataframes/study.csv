@@ -1,2 +1,2 @@
-study_id	name	short_name	description	keyword	website	domain	population	access_limitations	access_requirements	nb_donors	nb_files	seq	snv	cnv	sv	exp	meth
+study_id	name	short_name	description	keyword	website	domain	population	access_limitations	access_requirements	nb_participants	nb_files	seq	snv	cnv	sv	exp	meth
 ST0001	Study1	ST1	population-based cohort focusing on complex conditions	Common chronic disorders; Prospective cohort; Reference genome	www.study1.ca	General Health	Adult	General research use and clinical care (DUO_0000005)	Ethics approval required (DUO:0000021); Time limit on use (DUO:0000025)	377	754	555	0	0	0	0	0
