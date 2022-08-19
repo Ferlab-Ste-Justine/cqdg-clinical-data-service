@@ -1,6 +1,6 @@
 import {MigrationInterface, QueryRunner} from 'typeorm';
 
-export class ModifyColumnName1660871196 implements MigrationInterface {
+export class ModifyColumnName1660917556976 implements MigrationInterface {
     private tableName = 'sample_registration';
     private oldColumnName = 'submitter_donor_id';
     private newColumnName = 'submitter_participant_id';
