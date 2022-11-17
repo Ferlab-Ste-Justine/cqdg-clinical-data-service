@@ -82,7 +82,7 @@ export class UploadController extends BaseController {
     }
 
     /**
-     * Step 2 - Register samples or update previously registered samples
+     * Step 1 - Register samples or update previously registered samples
      *
      * @param code
      * @param user
@@ -169,12 +169,97 @@ export class UploadController extends BaseController {
     }
 
     /**
+     * Step 2 - Only validate clinical data
+     *
+     * @param code
+     * @param user
+     */
+    @Post('/:studyVersionId/clinical-data/validate')
+    @OpenAPI({
+        consumes: 'multipart/form-data',
+        requestBody: {
+            description: 'A single file or a list of files respecting the dictionary model for the clinical data.',
+            content: {
+                'multipart/form-data': {
+                    schema: {
+                        type: 'object',
+                        properties: {
+                            files: {
+                                type: 'array',
+                                items: {
+                                    type: 'string',
+                                    format: 'binary',
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            required: true,
+        },
+    })
+    @ResponseSchema(ValidationReport)
+    public async validateClinicalData(
+        @Param('studyVersionId') studyVersionId: number,
+        @UploadedFiles('files', UploadController.uploadOptions) files: Express.Multer.File[],
+        @Req() request: any,
+        @Res() response: any,
+        @CurrentUser() user?: User
+    ): Promise<ValidationReport> {
+        const dataSubmission: DataSubmission = await this.dataSubmissionService.findOne(studyVersionId);
+
+        if (!(await this.isAllowed(user, dataSubmission))) {
+            throw new UnauthorizedError(`User ${user.id} not allowed to modify submission ${studyVersionId}`);
+        }
+
+        const report = new ValidationReport();
+
+        const schemas = await this.fetchDictionary(request, this.lecternService, dataSubmission.dictionaryVersion);
+        const dataSubmissionCount: number = await this.sampleRegistrationService.countByDataSubmission(studyVersionId);
+
+        if (!dataSubmissionCount || dataSubmissionCount === 0) {
+            throw new HttpError(400, `No samples are registered for data submission id ${studyVersionId}`);
+        }
+
+        report.files = [];
+        report.errors = [];
+
+        let nbOfErrors = 0;
+
+        const maxErrorsPerFile = files.length > 0 ?
+            Math.ceil((UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD / files.length)) :
+            UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD;
+
+        for (const f of files) {
+            if (nbOfErrors < UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD) {
+                this.log.debug(`Validating ${f.originalname}`);
+                const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
+                    f,
+                    schemas,
+                    studyVersionId,
+                    maxErrorsPerFile
+                );
+
+                report.files.push(singleFileValidationStatus);
+                nbOfErrors += (singleFileValidationStatus.validationErrors || []).length;
+            }
+        }
+
+        this.log.debug(JSON.stringify(report));
+
+        if (nbOfErrors > 0) {
+            response.status(400);
+        }
+        return report;
+    }
+
+    /**
      * Step 3 - Submit clinical data
      *
      * @param code
      * @param user
      */
-    @Post('/:studyVersionId/clinical-data')
+    @Post('/:studyVersionId/clinical-data/upload')
     @OpenAPI({
         consumes: 'multipart/form-data',
         requestBody: {
@@ -272,7 +357,7 @@ export class UploadController extends BaseController {
     /**
      * Step 4 - Cross validate the data
      */
-    @Post('/:studyVersionId/clinical-data/validate')
+    @Post('/:studyVersionId/clinical-data/cross-validate')
     public async crossValidateAllData(
         @Param('studyVersionId') studyVersionId: number,
         @CurrentUser() user: User,
