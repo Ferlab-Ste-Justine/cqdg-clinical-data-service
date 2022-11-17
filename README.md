@@ -33,7 +33,11 @@ You need to set up your development environment before you can do anything.
 
 - Install Python (required for sqlite build)
 
-- Launch the infrastructure : npm run launch
+- Launch the infrastructure : 
+
+```bash
+npm run launch
+```
 
 ### Step 2: Create new Project
 

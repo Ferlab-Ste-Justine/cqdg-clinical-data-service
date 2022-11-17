@@ -8,9 +8,15 @@ export const selectSchema = async (
     const filenameWithoutExtension = filename.substring(0, filename.indexOf('.'));
     const cleanedFileName = sanitize(filenameWithoutExtension);
 
-    return dictionary.schemas.find((schema) => {
+    const schemaFound = dictionary.schemas.find((schema) => {
         return sanitize(schema.name) === cleanedFileName;
-    }).name;
+    });
+
+    if (!schemaFound) {
+        throw new Error('[selectSchema] No schema found, filename should fit schema.name');
+    }
+
+    return schemaFound.name;
 };
 
 export const isEmptyOrSpaces = (str: string): boolean => {
