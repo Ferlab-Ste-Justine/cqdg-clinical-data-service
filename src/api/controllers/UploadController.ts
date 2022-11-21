@@ -135,7 +135,7 @@ export class UploadController extends BaseController {
         );
         report.files.push(singleFileValidationStatus);
 
-        this.log.debug(JSON.stringify(report));
+        this.log.debug(`[registerSamples] report: ${JSON.stringify(report)}`);
 
         if (
             singleFileValidationStatus &&
@@ -232,7 +232,7 @@ export class UploadController extends BaseController {
 
         for (const f of files) {
             if (nbOfErrors < UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD) {
-                this.log.debug(`Validating ${f.originalname}`);
+                this.log.debug(`[validateClinicalData] Validating: ${f.originalname}`);
                 const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
                     f,
                     schemas,
@@ -245,7 +245,7 @@ export class UploadController extends BaseController {
             }
         }
 
-        this.log.debug(JSON.stringify(report));
+        this.log.debug(`[validateClinicalData] report: ${JSON.stringify(report)}`);
 
         if (nbOfErrors > 0) {
             response.status(400);
@@ -319,7 +319,7 @@ export class UploadController extends BaseController {
 
         for (const f of files) {
             if (nbOfErrors < UploadController.GLOBAL_VALIDATION_ERROR_THRESHOLD) {
-                this.log.debug(`Validating ${f.originalname}`);
+                this.log.debug(`[uploadClinicalData] Validating ${f.originalname}`);
                 const singleFileValidationStatus: SingleFileValidationStatus = await this.validationService.validateFile(
                     f,
                     schemas,
@@ -346,7 +346,7 @@ export class UploadController extends BaseController {
             }
         }
 
-        this.log.debug(JSON.stringify(report));
+        this.log.debug(`[uploadClinicalData] report: ${JSON.stringify(report)}`);
 
         if (nbOfErrors > 0) {
             response.status(400);

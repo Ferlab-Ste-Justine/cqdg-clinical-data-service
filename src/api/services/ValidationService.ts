@@ -86,12 +86,12 @@ export class ValidationService {
                 const df = dataForge.fromCSV(content);
                 dataframes[schemaName.toLowerCase()] = df;
             } catch (err) {
-                this.log.error(`Failed to load file ${file}.\n\r${err}`);
+                this.log.error(`[validateAll] Failed to load file ${file}.\n\r${err}`);
             }
         }
 
         if (!this.validateAllDataSubmitted(dataframes)) {
-            throw new Error('Cannot proceed to validation.  Missing data.');
+            throw new Error('[validateAll] Cannot proceed to validation.  Missing data.');
         }
 
         report.globalValidationErrors.push(
@@ -301,7 +301,7 @@ export class ValidationService {
         joinKey: string,
         entityType: CQDGDictionaryEntities
     ): Promise<RecordValidationError[]> {
-        this.log.info('Return a list of orphan children');
+        this.log.debug('[findOrphans] Return a list of orphan children');
         const validationErrors: RecordValidationError[] = [];
 
         if (!parent || !children) {
@@ -354,7 +354,7 @@ export class ValidationService {
                     }
                 }
             } catch (err) {
-                this.log.error(`Failed to load rule file ${file}.\n\r${err}`);
+                this.log.error(`[fetchRules] Failed to load rule file ${file}.\n\r${err}`);
             }
         }
 
