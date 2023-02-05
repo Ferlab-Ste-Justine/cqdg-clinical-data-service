@@ -16,5 +16,5 @@ jobs:
         with:
           username: ${{ secrets.FERLAB_DOCKER_HUB_USER }}
           password: ${{ secrets.FERLAB_DOCKER_HUB_TOKEN }}
-          image: ferlabcrsj/cqdg-api-arranger
+          image: ferlabcrsj/cqdg-clinical-data-service
           tag_format: "{semver}"
