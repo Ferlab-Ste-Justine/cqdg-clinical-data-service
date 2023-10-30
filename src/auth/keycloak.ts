@@ -36,7 +36,7 @@ const getUserFromJWK = (token) => (jwk) =>
     )(token);
 
 const fetchPublicKeys = async ({ realm, serverUrl, useCache = true }) => {
-    const url = `${serverUrl}/auth/realms/${realm}/protocol/openid-connect/certs`;
+    const url = `${serverUrl}/realms/${realm}/protocol/openid-connect/certs`;
     const key = url;
 
     if (useCache) {
