@@ -22,7 +22,7 @@ export const configureSwagger = async (app: express.Application): Promise<void> 
         });
 
         const { serverUrl, realm } = env.auth;
-        const tokenUrl = `${serverUrl}/auth/realms/${realm}/protocol/openid-connect/token`;
+        const tokenUrl = `${serverUrl}/realms/${realm}/protocol/openid-connect/token`;
 
         const swaggerFile = routingControllersToSpec(
             getMetadataArgsStorage(),
