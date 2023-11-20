@@ -1,16 +1,24 @@
-import {
-    entities as dictionaryEntities,
-    parallel,
-} from '@overturebio-stack/lectern-client';
+import { entities as dictionaryEntities, parallel } from '@overturebio-stack/lectern-client';
 import { Service } from 'typedi';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import axios, { AxiosResponse } from 'axios';
 import { env } from '../../env';
+import cloneDeep from 'lodash/cloneDeep';
 import { Cache, CacheContainer } from 'node-ts-cache';
 import { MemoryStorage } from 'node-ts-cache-storage-memory';
-import { BatchProcessingResult, SchemaProcessingResult } from '@overturebio-stack/lectern-client/lib/schema-entities';
+import {
+    BatchProcessingResult, DataRecord, SchemaProcessingResult, ValueType,
+} from '@overturebio-stack/lectern-client/lib/schema-entities';
 
 const dictionaryCache = new CacheContainer(new MemoryStorage());
+
+const splitFieldsToArray = (fields: string[], record: DataRecord) => {
+    const copyFields = cloneDeep(record);
+    fields.forEach(field =>  {
+        if (copyFields[field]) { copyFields[field] = copyFields[field].split(';').map((f: string) => f.trim()); }
+    });
+    return copyFields;
+};
 
 @Service()
 export class LecternService {
@@ -93,12 +101,22 @@ export class LecternService {
                     // rowIds => +2 because index starts at 0 and there is the header row
                     const rowIdx = index + indexOffset + 2;
 
+                    const dict = schemasDictionary.schemas.find(r => r.name === schemaName);
+
+                    /* assuming the field `isArray` and has a `codeList` -> split by ';' and transform to array
+                    `restrictions.script` should NOT be provided, as we don't want a validateScript, only a validateEnum*/
+                    const fieldsToTransform = dict.fields.filter(field =>
+                        (field.isArray && field.valueType === ValueType.STRING && field.restrictions?.codeList?.length)).map(f => f.name);
+
+                    const sanitizedRecord = splitFieldsToArray(fieldsToTransform, record);
+
                     const schemaProcessingResult: SchemaProcessingResult = await parallel.processRecord(
                         schemasDictionary,
                         schemaName,
-                        record,
+                        sanitizedRecord,
                         rowIdx
                     );
+
                     if (schemaProcessingResult.validationErrors) {
                         batchProcessingResult.validationErrors.push(...schemaProcessingResult.validationErrors);
                     }
@@ -116,7 +134,6 @@ export class LecternService {
             throw err;
         }
     }
-
     private getLecternAuthToken(): string {
         const token = Buffer.from(`${env.lectern.username}:${env.lectern.password}`, 'utf8').toString('base64');
         return token;
