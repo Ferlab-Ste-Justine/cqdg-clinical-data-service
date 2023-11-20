@@ -3,7 +3,7 @@ import { Service } from 'typedi';
 import { Logger, LoggerInterface } from '../../decorators/Logger';
 import axios, { AxiosResponse } from 'axios';
 import { env } from '../../env';
-import { cloneDeep } from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
 import { Cache, CacheContainer } from 'node-ts-cache';
 import { MemoryStorage } from 'node-ts-cache-storage-memory';
 import {
@@ -14,7 +14,7 @@ const dictionaryCache = new CacheContainer(new MemoryStorage());
 
 const splitFieldsToArray = (fields: string[], record: DataRecord) => {
     const copyFields = cloneDeep(record);
-    fields.map(field =>  {
+    fields.forEach(field =>  {
         if (copyFields[field]) { copyFields[field] = copyFields[field].split(';').map((f: string) => f.trim()); }
     });
     return copyFields;
